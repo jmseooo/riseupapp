@@ -25,6 +25,10 @@ struct OnboardingView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea()
+        .task {
+            try? await Task.sleep(for: .seconds(1))
+            withAnimation { page = 1 }
+        }
     }
 }
 

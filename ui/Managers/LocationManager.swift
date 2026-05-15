@@ -41,12 +41,17 @@ extension LocationManager: CLLocationManagerDelegate {
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else { return }
-        AlarmSettings.shared.latitude = location.coordinate.latitude
-        AlarmSettings.shared.longitude = location.coordinate.longitude
+        let lat = location.coordinate.latitude
+        let lon = location.coordinate.longitude
+        AlarmSettings.shared.latitude = lat
+        AlarmSettings.shared.longitude = lon
         AlarmSettings.shared.locationPermissionDenied = false
 
-        if AlarmSettings.shared.isEnabled {
-            Task { await NotificationManager.shared.scheduleSunriseAlarm() }
+        Task {
+            await WeatherService.shared.fetch(latitude: lat, longitude: lon)
+            if AlarmSettings.shared.isEnabled {
+                await NotificationManager.shared.scheduleSunriseAlarm()
+            }
         }
     }
 

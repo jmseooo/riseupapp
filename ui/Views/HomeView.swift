@@ -4,13 +4,14 @@ import Combine
 struct HomeView: View {
     @Environment(AlarmSettings.self) private var settings
     @State private var now = Date()
+    private let weather = WeatherService.shared
 
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherBackground(condition: .sunrise)
+                WeatherBackground(condition: backgroundCondition)
 
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
@@ -94,7 +95,7 @@ struct HomeView: View {
 
     private var temperatureView: some View {
         HStack(alignment: .top, spacing: 0) {
-            Text("24")
+            Text(weather.current.map { "\(Int($0.temperature.rounded()))" } ?? "--")
                 .font(.rajdhani(62))
                 .foregroundStyle(Color.rTextMuted)
             Text("°")
@@ -106,10 +107,10 @@ struct HomeView: View {
 
     private var weatherConditionView: some View {
         HStack(spacing: 6) {
-            Image(systemName: "cloud.fill")
+            Image(systemName: weatherIcon)
                 .font(.system(size: 22))
                 .foregroundStyle(Color.rTextMuted)
-            Text("Good Afternoon")
+            Text(greeting)
                 .font(.prompt(18, weight: .semiBold))
                 .foregroundStyle(Color.rTextMuted)
         }
@@ -203,6 +204,62 @@ struct HomeView: View {
         let m = Int(diff) % 3600 / 60
         if h > 0 { return "The sun will rise in \(h)h \(m)m." }
         return "The sun will rise in \(m)m."
+    }
+
+    // MARK: - Weather helpers
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: now)
+        switch hour {
+        case 5..<12: return "Good Morning"
+        case 12..<17: return "Good Afternoon"
+        case 17..<21: return "Good Evening"
+        default:      return "Good Night"
+        }
+    }
+
+    private var weatherIcon: String {
+        guard let code = weather.current?.weatherCode else { return "sun.max.fill" }
+        switch code {
+        case 0, 1:       return "sun.max.fill"
+        case 2:          return "cloud.sun.fill"
+        case 3:          return "cloud.fill"
+        case 45, 48:     return "cloud.fog.fill"
+        case 51, 53, 55: return "cloud.drizzle.fill"
+        case 61, 63, 65: return "cloud.rain.fill"
+        case 71, 73, 75, 77: return "snowflake"
+        case 80, 81, 82: return "cloud.heavyrain.fill"
+        case 85, 86:     return "cloud.snow.fill"
+        case 95, 96, 99: return "cloud.bolt.rain.fill"
+        default:         return "sun.max.fill"
+        }
+    }
+
+    private var backgroundCondition: WeatherCondition {
+        let code = weather.current?.weatherCode ?? -1
+        let hour = Calendar.current.component(.hour, from: now)
+
+        if hour >= 22 || hour < 5  { return .night }
+        if hour < 7                { return (code == 0 || code == 1) ? .sunrise : daytimeCondition(code: code) }
+        if hour >= 19              { return (code == 0 || code == 1) ? .sunset  : daytimeCondition(code: code) }
+        if hour >= 17              { return (code == 0 || code == 1) ? .goldenHour : daytimeCondition(code: code) }
+        return daytimeCondition(code: code)
+    }
+
+    private func daytimeCondition(code: Int) -> WeatherCondition {
+        switch code {
+        case 0, 1:           return .clearDay
+        case 2:              return .partlyCloudy
+        case 3:              return .cloudy
+        case 45, 48:         return .fog
+        case 51, 53, 55:     return .drizzle
+        case 61, 63, 65,
+             80, 81, 82:     return .rain
+        case 71, 73, 75, 77: return .snow
+        case 85, 86:         return .blizzard
+        case 95, 96, 99:     return .thunderstorm
+        default:             return .clearDay
+        }
     }
 }
 
