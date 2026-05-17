@@ -313,12 +313,12 @@ struct WeatherThemeLibrary {
 
     static func humidityParams(_ humidity: Double) -> (blurRadius: CGFloat, opacity: Double) {
         switch humidity {
-        case 0..<20:  return (20, 0.65)
-        case 20..<40: return (28, 0.72)
-        case 40..<60: return (38, 0.80)
-        case 60..<75: return (50, 0.87)
-        case 75..<90: return (65, 0.92)
-        default:      return (80, 0.97)
+        case 0..<20:  return ( 6, 0.70)
+        case 20..<40: return (10, 0.76)
+        case 40..<60: return (16, 0.82)
+        case 60..<75: return (22, 0.88)
+        case 75..<90: return (28, 0.93)
+        default:      return (35, 0.97)
         }
     }
 
