@@ -62,7 +62,8 @@ private struct AnimatedBlob: View {
     let size:   CGSize
     let index:  Int
 
-    @State private var phase = false
+    @State private var phaseX = false
+    @State private var phaseY = false
 
     private var blobSize: CGFloat {
         max(blob.sizePercent / 100 * size.width, 1)
@@ -70,20 +71,21 @@ private struct AnimatedBlob: View {
     private var cx: CGFloat { blob.xPercent / 100 * size.width }
     private var cy: CGFloat { blob.yPercent / 100 * size.height }
 
-    // blob마다 황금각(137°) 간격으로 다른 방향
-    private var driftAngle: Double {
-        Double(index * 137 + Int(blob.xPercent * 7 + blob.yPercent * 3)) * .pi / 180
-    }
     private var driftX: CGFloat {
-        cos(driftAngle) * CGFloat(params.displacementPercent) / 100 * size.width
+        CGFloat(params.displacementPercent) / 100 * size.width
+            * CGFloat(0.5 + 0.5 * cos(Double(index * 137) * .pi / 180))
     }
     private var driftY: CGFloat {
-        sin(driftAngle) * CGFloat(params.displacementPercent) / 100 * size.height
+        CGFloat(params.displacementPercent) / 100 * size.height
+            * CGFloat(0.5 + 0.5 * sin(Double(index * 137) * .pi / 180))
     }
 
-    // blob마다 주기 미세 차이 → 자연스럽게 탈동기화
-    private var duration: Double {
-        params.animationDuration * (1.0 + Double(index % 7 - 3) * 0.08)
+    // X/Y 주기를 다르게 → 타원형으로 둥둥 떠다니는 효과
+    private var durationX: Double {
+        params.animationDuration * (1.0 + Double(index % 5 - 2) * 0.09)
+    }
+    private var durationY: Double {
+        params.animationDuration * (1.0 + Double(index % 7 - 3) * 0.13)
     }
 
     var body: some View {
@@ -106,15 +108,22 @@ private struct AnimatedBlob: View {
             .brightness(params.brightnessScale - 1.0)
             .saturation(params.saturationScale)
             .position(
-                x: cx + (phase ? driftX : -driftX),
-                y: cy + (phase ? driftY : -driftY)
+                x: cx + (phaseX ? driftX : -driftX),
+                y: cy + (phaseY ? driftY : -driftY)
             )
             .onAppear {
-                let stagger = Double(index % 5) * 0.3
+                let staggerX = Double(index % 5) * 0.25
+                let staggerY = Double(index % 7) * 0.2
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(stagger))
-                    withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
-                        phase = true
+                    try? await Task.sleep(for: .seconds(staggerX))
+                    withAnimation(.easeInOut(duration: durationX).repeatForever(autoreverses: true)) {
+                        phaseX = true
+                    }
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(staggerY))
+                    withAnimation(.easeInOut(duration: durationY).repeatForever(autoreverses: true)) {
+                        phaseY = true
                     }
                 }
             }

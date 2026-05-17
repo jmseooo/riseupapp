@@ -326,12 +326,12 @@ struct WeatherThemeLibrary {
 
     static func windParams(_ windSpeed: Double) -> (duration: Double, displacement: Double) {
         switch windSpeed {
-        case 0..<1:   return (46, 20)
-        case 1..<3:   return (40, 25)
-        case 3..<7:   return (31, 32)
-        case 7..<14:  return (22, 40)
-        case 14..<25: return (14, 50)
-        default:      return  (8, 62)
+        case 0..<1:   return (12, 28)
+        case 1..<3:   return (10, 36)
+        case 3..<7:   return ( 8, 46)
+        case 7..<14:  return ( 6, 56)
+        case 14..<25: return ( 4, 68)
+        default:      return ( 3, 80)
         }
     }
 
