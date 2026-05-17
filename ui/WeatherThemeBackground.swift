@@ -109,16 +109,13 @@ private struct AnimatedBlob: View {
                 x: cx + (phase ? driftX : -driftX),
                 y: cy + (phase ? driftY : -driftY)
             )
-            .animation(
-                .easeInOut(duration: duration).repeatForever(autoreverses: true),
-                value: phase
-            )
             .onAppear {
-                // index별 stagger: 0.3초 간격
                 let stagger = Double(index % 5) * 0.3
-                Task {
+                Task { @MainActor in
                     try? await Task.sleep(for: .seconds(stagger))
-                    phase = true
+                    withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+                        phase = true
+                    }
                 }
             }
     }
