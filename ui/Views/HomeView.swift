@@ -11,7 +11,10 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherBackground(condition: backgroundCondition)
+                WeatherThemeBackground(
+                    weather: weather.current,
+                    hour: Calendar.current.component(.hour, from: now)
+                )
 
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
