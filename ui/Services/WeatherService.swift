@@ -13,6 +13,7 @@ final class WeatherService {
     static let shared = WeatherService()
 
     var current: WeatherData?
+    var utcOffsetSeconds: Int?
     var isLoading = false
     var lastError: String?
 
@@ -24,10 +25,11 @@ final class WeatherService {
 
         var components = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
         components.queryItems = [
-            .init(name: "latitude",  value: String(latitude)),
-            .init(name: "longitude", value: String(longitude)),
-            .init(name: "current",   value: "temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,cloud_cover"),
-            .init(name: "timezone",  value: "auto")
+            .init(name: "latitude",         value: String(latitude)),
+            .init(name: "longitude",        value: String(longitude)),
+            .init(name: "current",          value: "temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,cloud_cover"),
+            .init(name: "temperature_unit", value: "celsius"),
+            .init(name: "timezone",         value: "auto")
         ]
 
         guard let url = components.url else { return }
@@ -36,6 +38,7 @@ final class WeatherService {
             let (data, _) = try await URLSession.shared.data(from: url)
             let response = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
             let c = response.current
+            print("[WeatherService] raw temperature: \(c.temperature2m)°C, utcOffset: \(response.utcOffsetSeconds)s")
             current = WeatherData(
                 temperature: c.temperature2m,
                 weatherCode: c.weatherCode,
@@ -43,6 +46,7 @@ final class WeatherService {
                 humidity: c.relativeHumidity2m,
                 cloudCover: c.cloudCover
             )
+            utcOffsetSeconds = response.utcOffsetSeconds
             lastError = nil
         } catch {
             lastError = error.localizedDescription
@@ -55,6 +59,12 @@ final class WeatherService {
 
 private struct OpenMeteoResponse: Decodable {
     let current: CurrentWeather
+    let utcOffsetSeconds: Int
+
+    enum CodingKeys: String, CodingKey {
+        case current
+        case utcOffsetSeconds = "utc_offset_seconds"
+    }
 }
 
 private struct CurrentWeather: Decodable {

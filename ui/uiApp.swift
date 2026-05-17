@@ -7,6 +7,9 @@ struct uiApp: App {
     private let settings = AlarmSettings.shared
 
     init() {
+        #if DEBUG
+        AlarmSettings.shared.hasCompletedOnboarding = false
+        #endif
         BackgroundTaskManager.shared.registerTask()
         NotificationManager.shared.registerAlarmCategory()
     }

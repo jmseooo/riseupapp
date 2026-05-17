@@ -68,6 +68,14 @@ struct HomeView: View {
 
                     Spacer()
 
+                    // ── Debug info ────────────────────────────────────────
+                    Text(debugInfo)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.bottom, 8)
+
                     // ── Alarm card ─────────────────────────────────────────
                     alarmCard
                         .padding(.horizontal, DS.hPad)
@@ -75,7 +83,7 @@ struct HomeView: View {
 
                     // ── Bottom nav ─────────────────────────────────────────
                     bottomNav
-                        .padding(.bottom, 48)
+                        .padding(.bottom, 24)
                 }
             }
             .navigationBarHidden(true)
@@ -182,17 +190,42 @@ struct HomeView: View {
 
     // MARK: - Helpers
 
+    private var debugInfo: String {
+        let dayF = DateFormatter()
+        dayF.dateFormat = "M/d (EEE)"
+        dayF.timeZone = settings.locationTimezone
+        let dateStr = dayF.string(from: now)
+
+        let sunriseStr: String
+        if let sunrise = settings.nextSunriseTime {
+            let tf = DateFormatter()
+            tf.dateFormat = "H:mm"
+            tf.timeZone = settings.locationTimezone
+            sunriseStr = tf.string(from: sunrise)
+        } else {
+            sunriseStr = "--:--"
+        }
+
+        let tempStr = weather.current.map { "\(Int($0.temperature.rounded()))°C" } ?? "--°C"
+        let lat = String(format: "%.2f", settings.latitude)
+        let lon = String(format: "%.2f", settings.longitude)
+        return "일출 \(sunriseStr)  \(tempStr)  \(dateStr)  (\(lat), \(lon))"
+    }
+
     private var timeString: String {
-        guard let alarm = settings.nextAlarmTime else { return "--:--" }
+        guard let sunrise = settings.nextSunriseTime else { return "--:--" }
         let f = DateFormatter()
         f.dateFormat = "H:mm"
-        return f.string(from: alarm)
+        f.timeZone = settings.locationTimezone
+        return f.string(from: sunrise)
     }
 
     private var dayLabel: String {
-        guard let alarm = settings.nextAlarmTime else { return "" }
-        if Calendar.current.isDateInToday(alarm)    { return "today" }
-        if Calendar.current.isDateInTomorrow(alarm) { return "tomorrow" }
+        guard let sunrise = settings.nextSunriseTime else { return "" }
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = settings.locationTimezone
+        if cal.isDateInToday(sunrise)    { return "today" }
+        if cal.isDateInTomorrow(sunrise) { return "tomorrow" }
         return ""
     }
 
@@ -219,6 +252,8 @@ struct HomeView: View {
     }
 
     private var weatherIcon: String {
+        let hour = Calendar.current.component(.hour, from: now)
+        if hour >= 22 || hour < 5 { return "moon.stars.fill" }
         guard let code = weather.current?.weatherCode else { return "sun.max.fill" }
         switch code {
         case 0, 1:       return "sun.max.fill"

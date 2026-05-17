@@ -6,16 +6,7 @@ struct SettingsView: View {
     @Environment(AlarmSettings.self) private var settings
     @State private var locationManager = LocationManager.shared
 
-    // Weekday display data
-    private let weekdays: [(String, String)] = [
-        ("Sunday",    "3/3"),
-        ("Monday",    "3/4"),
-        ("Tuesday",   "3/5"),
-        ("Wednesday", "3/6"),
-        ("Thursday",  "3/7"),
-        ("Friday",    "3/8"),
-        ("Saturday",  "3/9"),
-    ]
+    private let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     @State private var weekdayEnabled = [true, false, true, true, true, false, true]
 
     var body: some View {
@@ -44,36 +35,11 @@ struct SettingsView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 16)
 
-                // ── Section header ───────────────────────────────────────
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Daily alarms")
-                        .font(.pretendard(13, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text("activate")
-                        .font(.pretendard(13, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, DS.hPad)
-                .padding(.bottom, 16)
-
-                // ── Offset adjustment ────────────────────────────────────
-                offsetSection
-
-                Divider()
-                    .background(Color.white.opacity(0.12))
-                    .padding(.horizontal, DS.hPad)
-                    .padding(.vertical, 8)
-
                 // ── Day rows ─────────────────────────────────────────────
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         ForEach(weekdays.indices, id: \.self) { i in
-                            dayRow(
-                                day: weekdays[i].0,
-                                date: weekdays[i].1,
-                                isOn: $weekdayEnabled[i]
-                            )
+                            dayRow(day: weekdays[i], isOn: $weekdayEnabled[i])
                         }
                     }
                     .padding(.horizontal, DS.hPad)
@@ -84,7 +50,7 @@ struct SettingsView: View {
 
             // ── Save button ───────────────────────────────────────────────
             saveButton
-                .padding(.horizontal, 27)
+                .padding(.horizontal, DS.hPad)
                 .padding(.bottom, 48)
         }
         .navigationBarHidden(true)
@@ -136,17 +102,12 @@ struct SettingsView: View {
 
     // MARK: - Day row
 
-    private func dayRow(day: String, date: String, isOn: Binding<Bool>) -> some View {
+    private func dayRow(day: String, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 0) {
             Text(day)
                 .font(.pretendard(17, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 110, alignment: .leading)
-
-            Text(date)
-                .font(.pretendard(17, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.30))
-                .frame(width: 40, alignment: .leading)
 
             if let alarm = settings.nextAlarmTime {
                 Text(alarmTimeString(alarm))

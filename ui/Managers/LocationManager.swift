@@ -19,9 +19,7 @@ final class LocationManager: NSObject {
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse:
-            manager.requestAlwaysAuthorization()
-        case .authorizedAlways:
+        case .authorizedWhenInUse, .authorizedAlways:
             manager.requestLocation()
         case .denied, .restricted:
             AlarmSettings.shared.locationPermissionDenied = true
@@ -63,9 +61,7 @@ extension LocationManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         switch manager.authorizationStatus {
-        case .authorizedWhenInUse:
-            manager.requestAlwaysAuthorization()
-        case .authorizedAlways:
+        case .authorizedWhenInUse, .authorizedAlways:
             AlarmSettings.shared.locationPermissionDenied = false
             manager.requestLocation()
         case .denied, .restricted:

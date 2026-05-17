@@ -35,18 +35,80 @@ final class AlarmSettings {
         locationPermissionDenied = UserDefaults.standard.bool(forKey: Keys.locationPermissionDenied)
     }
 
+    // API 응답의 utc_offset_seconds 우선 사용, 없으면 경도 기반 근사값
+    var locationTimezone: TimeZone {
+        if let offset = WeatherService.shared.utcOffsetSeconds {
+            return TimeZone(secondsFromGMT: offset) ?? .current
+        }
+        let offsetHours = Int(round(longitude / 15.0))
+        return TimeZone(secondsFromGMT: offsetHours * 3600) ?? .current
+    }
+
     var todaySunriseTime: Date? {
-        SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: Date())
+        let now = Date()
+        guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
+        return SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: utcNoon(year: y, month: m, day: d))
+    }
+
+    // 오늘 일출이 안 지났으면 오늘, 지났으면 내일 일출 시간
+    var nextSunriseTime: Date? {
+        let now = Date()
+        guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
+
+        let todayNoon = utcNoon(year: y, month: m, day: d)
+        if let todaySunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: todayNoon),
+           todaySunrise > now {
+            return todaySunrise
+        }
+
+        var utcCal = Calendar(identifier: .gregorian)
+        utcCal.timeZone = TimeZone(identifier: "UTC")!
+        let tomorrowNoon = utcCal.date(byAdding: .day, value: 1, to: todayNoon)!
+        return SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: tomorrowNoon)
     }
 
     var nextAlarmTime: Date? {
         let now = Date()
-        if let todaySunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: now) {
+        guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
+
+        let todayNoon = utcNoon(year: y, month: m, day: d)
+        if let todaySunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: todayNoon) {
             let alarmTime = todaySunrise.addingTimeInterval(Double(offsetMinutes) * 60)
             if alarmTime > now { return alarmTime }
         }
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now)!
-        guard let tomorrowSunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: tomorrow) else { return nil }
+
+        var utcCal = Calendar(identifier: .gregorian)
+        utcCal.timeZone = TimeZone(identifier: "UTC")!
+        let tomorrowNoon = utcCal.date(byAdding: .day, value: 1, to: todayNoon)!
+        guard let tomorrowSunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: tomorrowNoon) else { return nil }
         return tomorrowSunrise.addingTimeInterval(Double(offsetMinutes) * 60)
+    }
+
+    // MARK: - Helpers
+
+    private func localYear(from date: Date) -> Int? {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = locationTimezone
+        return cal.component(.year, from: date)
+    }
+    private func localMonth(from date: Date) -> Int? {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = locationTimezone
+        return cal.component(.month, from: date)
+    }
+    private func localDay(from date: Date) -> Int? {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = locationTimezone
+        return cal.component(.day, from: date)
+    }
+
+    // 해당 날짜의 UTC 정오 — SunriseService(UTC 기준)에 넘기면 올바른 날의 일출을 계산
+    private func utcNoon(year: Int, month: Int, day: Int) -> Date {
+        var utcCal = Calendar(identifier: .gregorian)
+        utcCal.timeZone = TimeZone(identifier: "UTC")!
+        var comps = DateComponents()
+        comps.year = year; comps.month = month; comps.day = day
+        comps.hour = 12; comps.minute = 0; comps.second = 0
+        return utcCal.date(from: comps) ?? Date()
     }
 }

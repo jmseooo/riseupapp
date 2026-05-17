@@ -14,7 +14,7 @@ struct PersonalView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            WeatherBackground(condition: .sunrise)
+            Color.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 navBar
@@ -154,7 +154,7 @@ struct PersonalView: View {
                     todoRow(item: $item)
                 }
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, DS.hPad)
             .padding(.top, 16)
         }
     }
