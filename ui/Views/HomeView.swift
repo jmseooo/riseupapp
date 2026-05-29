@@ -8,6 +8,8 @@ struct HomeView: View {
 
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
+    @State private var showAppSettings = false
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -22,6 +24,15 @@ struct HomeView: View {
                         temperatureView
                         Spacer()
                         weatherConditionView
+                        Button {
+                            showAppSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundStyle(Color.rTextMuted)
+                                .padding(.top, 30)
+                                .padding(.leading, 12)
+                        }
                     }
                     .padding(.horizontal, DS.hPad)
                     .padding(.top, 8)
@@ -91,6 +102,9 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
             .onReceive(ticker) { now = $0 }
+            .sheet(isPresented: $showAppSettings) {
+                AppSettingsView()
+            }
             .task {
                 LocationManager.shared.updateLocation()
                 guard settings.isEnabled else { return }

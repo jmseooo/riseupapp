@@ -24,14 +24,6 @@ struct OnboardingView: View {
                     .padding(.bottom, 122)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            // authorizationStatus 변화를 body 안에서 감지
-            Color.clear
-                .onChange(of: locationManager.authorizationStatus) { (_, status: CLAuthorizationStatus) in
-                    if status != .notDetermined {
-                        AlarmSettings.shared.hasCompletedOnboarding = true
-                    }
-                }
         }
         .ignoresSafeArea()
         .onAppear {
@@ -39,10 +31,20 @@ struct OnboardingView: View {
                 if locationManager.authorizationStatus == .notDetermined {
                     locationManager.requestPermission()
                 } else {
-                    AlarmSettings.shared.hasCompletedOnboarding = true
+                    requestNotificationThenFinish()
                 }
             }
         }
+        .onChange(of: locationManager.authorizationStatus) { (_, status: CLAuthorizationStatus) in
+            if status != .notDetermined {
+                requestNotificationThenFinish()
+            }
+        }
+    }
+
+    private func requestNotificationThenFinish() {
+        Task { await NotificationManager.shared.requestAuthorization() }
+        AlarmSettings.shared.hasCompletedOnboarding = true
     }
 }
 

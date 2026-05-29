@@ -45,6 +45,14 @@ struct SettingsView: View {
                     .padding(.horizontal, DS.hPad)
                 }
 
+                repeatRow
+                    .padding(.horizontal, DS.hPad)
+                    .padding(.top, 8)
+
+                offsetSection
+                    .padding(.top, 24)
+                    .padding(.bottom, 16)
+
                 Spacer()
             }
 
@@ -98,6 +106,27 @@ struct SettingsView: View {
         }
         .padding(.horizontal, DS.hPad)
         .padding(.bottom, 4)
+    }
+
+    // MARK: - Repeat row
+
+    private var repeatRow: some View {
+        @Bindable var settings = settings
+        return HStack {
+            Text("반복")
+                .font(.pretendard(17, weight: .semibold))
+                .foregroundStyle(.white)
+            Spacer()
+            Toggle("", isOn: $settings.repeatEnabled)
+                .labelsHidden()
+                .tint(Color.rGreenAccent)
+        }
+        .padding(.vertical, 18)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 0.5)
+        }
     }
 
     // MARK: - Day row

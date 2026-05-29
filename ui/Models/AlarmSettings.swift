@@ -12,6 +12,7 @@ final class AlarmSettings {
         static let hasCompletedOnboarding = "has_completed_onboarding"
         static let locationPermissionDenied = "location_permission_denied"
         static let wakeHistory = "wake_history"
+        static let repeatEnabled = "alarm_repeat_enabled"
     }
 
     // Seoul fallback coordinates
@@ -26,6 +27,7 @@ final class AlarmSettings {
     }
 
     var isEnabled: Bool { didSet { UserDefaults.standard.set(isEnabled, forKey: Keys.isEnabled) } }
+    var repeatEnabled: Bool { didSet { UserDefaults.standard.set(repeatEnabled, forKey: Keys.repeatEnabled) } }
     var offsetMinutes: Int { didSet { UserDefaults.standard.set(offsetMinutes, forKey: Keys.offsetMinutes) } }
     var latitude: Double { didSet { UserDefaults.standard.set(latitude, forKey: Keys.latitude) } }
     var longitude: Double { didSet { UserDefaults.standard.set(longitude, forKey: Keys.longitude) } }
@@ -34,6 +36,7 @@ final class AlarmSettings {
 
     private init() {
         isEnabled = UserDefaults.standard.bool(forKey: Keys.isEnabled)
+        repeatEnabled = UserDefaults.standard.object(forKey: Keys.repeatEnabled) as? Bool ?? true
         offsetMinutes = UserDefaults.standard.integer(forKey: Keys.offsetMinutes)
         let intervals = UserDefaults.standard.array(forKey: Keys.wakeHistory) as? [Double] ?? []
         wakeHistory = intervals.map { Date(timeIntervalSince1970: $0) }

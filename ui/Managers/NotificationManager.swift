@@ -100,8 +100,10 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         default:
             break
         }
-        // Reschedule for next day
-        await scheduleSunriseAlarm()
+        // Reschedule for next day only if repeat is enabled
+        if AlarmSettings.shared.repeatEnabled {
+            await scheduleSunriseAlarm()
+        }
     }
 
     func userNotificationCenter(
