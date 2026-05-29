@@ -107,6 +107,7 @@ struct HomeView: View {
             }
             .task {
                 LocationManager.shared.updateLocation()
+                await WeatherService.shared.fetch(latitude: settings.latitude, longitude: settings.longitude)
                 guard settings.isEnabled else { return }
                 let pending = await NotificationManager.shared.pendingSunriseAlarm()
                 if pending == nil {
