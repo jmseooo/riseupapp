@@ -248,13 +248,12 @@ struct WeatherThemeLibrary {
     static func baseTheme(wmoCode: Int, hour: Int) -> WeatherBaseTheme {
         let t = allThemes
         switch wmoCode {
-        case 0:
+        case 0, 1:
             switch hour {
-            case 5...7, 17...19: return t["sunrise"]!
-            case 8...16:         return t["clear-day"]!
+            case 5...8, 17...20: return t["sunrise"]!
+            case 9...16:         return t["clear-day"]!
             default:             return t["clear-night"]!
             }
-        case 1:           return t["clear-day"]!
         case 2:           return t["partly-cloudy"]!
         case 3:           return t["overcast"]!
         case 45, 48:      return t["mist"]!
