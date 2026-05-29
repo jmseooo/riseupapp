@@ -224,9 +224,11 @@ struct HomeView: View {
         }
 
         let tempStr = weather.current.map { "\(Int($0.temperature.rounded()))°C" } ?? "--°C"
+        let codeStr = weather.current.map { "WMO:\($0.weatherCode)" } ?? "WMO:--"
+        let cloudStr = weather.current.map { "cloud:\($0.cloudCover)%" } ?? "cloud:--"
         let lat = String(format: "%.2f", settings.latitude)
         let lon = String(format: "%.2f", settings.longitude)
-        return "일출 \(sunriseStr)  \(tempStr)  \(dateStr)  (\(lat), \(lon))"
+        return "일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))"
     }
 
     private var timeString: String {
@@ -287,32 +289,6 @@ struct HomeView: View {
         }
     }
 
-    private var backgroundCondition: WeatherCondition {
-        let code = weather.current?.weatherCode ?? -1
-        let hour = Calendar.current.component(.hour, from: now)
-
-        if hour >= 22 || hour < 5  { return .night }
-        if hour < 7                { return (code == 0 || code == 1) ? .sunrise : daytimeCondition(code: code) }
-        if hour >= 19              { return (code == 0 || code == 1) ? .sunset  : daytimeCondition(code: code) }
-        if hour >= 17              { return (code == 0 || code == 1) ? .goldenHour : daytimeCondition(code: code) }
-        return daytimeCondition(code: code)
-    }
-
-    private func daytimeCondition(code: Int) -> WeatherCondition {
-        switch code {
-        case 0, 1:           return .clearDay
-        case 2:              return .partlyCloudy
-        case 3:              return .cloudy
-        case 45, 48:         return .fog
-        case 51, 53, 55:     return .drizzle
-        case 61, 63, 65,
-             80, 81, 82:     return .rain
-        case 71, 73, 75, 77: return .snow
-        case 85, 86:         return .blizzard
-        case 95, 96, 99:     return .thunderstorm
-        default:             return .clearDay
-        }
-    }
 }
 
 #Preview {

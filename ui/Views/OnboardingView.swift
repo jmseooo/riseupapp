@@ -43,8 +43,15 @@ struct OnboardingView: View {
     }
 
     private func requestNotificationThenFinish() {
-        Task { await NotificationManager.shared.requestAuthorization() }
-        AlarmSettings.shared.hasCompletedOnboarding = true
+        Task {
+            // GPS 좌표가 도착할 때까지 최대 8초 대기
+            let deadline = Date().addingTimeInterval(8)
+            while !locationManager.hasReceivedFirstLocation && Date() < deadline {
+                try? await Task.sleep(for: .milliseconds(300))
+            }
+            await NotificationManager.shared.requestAuthorization()
+            AlarmSettings.shared.hasCompletedOnboarding = true
+        }
     }
 }
 

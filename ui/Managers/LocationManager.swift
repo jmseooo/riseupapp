@@ -7,6 +7,7 @@ final class LocationManager: NSObject {
 
     private let manager = CLLocationManager()
     var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    var hasReceivedFirstLocation = false
 
     override init() {
         super.init()
@@ -44,6 +45,7 @@ extension LocationManager: CLLocationManagerDelegate {
         AlarmSettings.shared.latitude = lat
         AlarmSettings.shared.longitude = lon
         AlarmSettings.shared.locationPermissionDenied = false
+        hasReceivedFirstLocation = true
 
         Task {
             await WeatherService.shared.fetch(latitude: lat, longitude: lon)
