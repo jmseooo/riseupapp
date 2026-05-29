@@ -11,11 +11,19 @@ final class AlarmSettings {
         static let longitude = "last_longitude"
         static let hasCompletedOnboarding = "has_completed_onboarding"
         static let locationPermissionDenied = "location_permission_denied"
+        static let wakeHistory = "wake_history"
     }
 
     // Seoul fallback coordinates
     private static let fallbackLatitude = 37.5665
     private static let fallbackLongitude = 126.9780
+
+    var pendingWakeUp: Bool = false
+    var wakeHistory: [Date] {
+        didSet {
+            UserDefaults.standard.set(wakeHistory.map(\.timeIntervalSince1970), forKey: Keys.wakeHistory)
+        }
+    }
 
     var isEnabled: Bool { didSet { UserDefaults.standard.set(isEnabled, forKey: Keys.isEnabled) } }
     var offsetMinutes: Int { didSet { UserDefaults.standard.set(offsetMinutes, forKey: Keys.offsetMinutes) } }
@@ -27,6 +35,8 @@ final class AlarmSettings {
     private init() {
         isEnabled = UserDefaults.standard.bool(forKey: Keys.isEnabled)
         offsetMinutes = UserDefaults.standard.integer(forKey: Keys.offsetMinutes)
+        let intervals = UserDefaults.standard.array(forKey: Keys.wakeHistory) as? [Double] ?? []
+        wakeHistory = intervals.map { Date(timeIntervalSince1970: $0) }
         let storedLat = UserDefaults.standard.double(forKey: Keys.latitude)
         let storedLon = UserDefaults.standard.double(forKey: Keys.longitude)
         latitude = storedLat == 0 ? Self.fallbackLatitude : storedLat
@@ -82,6 +92,17 @@ final class AlarmSettings {
         let tomorrowNoon = utcCal.date(byAdding: .day, value: 1, to: todayNoon)!
         guard let tomorrowSunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: tomorrowNoon) else { return nil }
         return tomorrowSunrise.addingTimeInterval(Double(offsetMinutes) * 60)
+    }
+
+    // MARK: - Wake history helpers
+
+    func recordWake(on date: Date = Date()) {
+        guard !wakeHistory.contains(where: { Calendar.current.isDate($0, inSameDayAs: date) }) else { return }
+        wakeHistory.append(date)
+    }
+
+    func wokeUp(on date: Date) -> Bool {
+        wakeHistory.contains { Calendar.current.isDate($0, inSameDayAs: date) }
     }
 
     // MARK: - Helpers

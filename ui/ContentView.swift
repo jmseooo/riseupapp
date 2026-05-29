@@ -5,11 +5,16 @@ struct ContentView: View {
     @State private var isReady = false
 
     var body: some View {
+        @Bindable var s = settings
         if !isReady {
             SplashView()
                 .task { await prepareApp() }
         } else if settings.hasCompletedOnboarding {
             HomeView()
+                .fullScreenCover(isPresented: $s.pendingWakeUp) {
+                    WakeUpView { s.pendingWakeUp = false }
+                        .environment(settings)
+                }
         } else {
             OnboardingView()
         }

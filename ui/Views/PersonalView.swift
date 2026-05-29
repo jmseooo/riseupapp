@@ -121,8 +121,8 @@ struct PersonalView: View {
     }
 
     private func pillColor(for day: DayData) -> Color {
-        if day.isToday  { return Color(hex: "#FF7A3D") }
-        if day.isPast   { return Color(hex: "#FFB199") }
+        if day.isToday { return Color(hex: "#FF7A3D") }
+        if day.isPast && settings.wokeUp(on: day.date) { return Color(hex: "#FFB199") }
         return .clear
     }
 
@@ -258,6 +258,7 @@ struct PersonalView: View {
             let isToday = cal.isDateInToday(date)
             let isFuture = date > today && !isToday
             return DayData(
+                date: date,
                 dayNumber: dayNum,
                 sunriseTime: sunrise,
                 isToday: isToday,
@@ -283,6 +284,7 @@ struct TodoItem: Identifiable {
 
 struct DayData: Identifiable {
     let id = UUID()
+    let date: Date
     let dayNumber: Int
     let sunriseTime: Date?
     let isToday: Bool

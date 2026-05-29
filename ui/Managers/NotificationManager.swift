@@ -91,7 +91,10 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
     ) async {
         switch response.actionIdentifier {
         case "WAKE_ACTION", UNNotificationDefaultActionIdentifier:
-            UserDefaults.standard.set(Date(), forKey: "last_wake_time")
+            await MainActor.run {
+                AlarmSettings.shared.recordWake()
+                AlarmSettings.shared.pendingWakeUp = true
+            }
         case "SNOOZE_ACTION":
             await scheduleSnooze(at: Date().addingTimeInterval(5 * 60))
         default:
