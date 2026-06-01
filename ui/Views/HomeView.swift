@@ -89,7 +89,17 @@ struct HomeView: View {
                     }
 
                     if isSunriseExpanded {
-                        Color.clear.frame(height: 10)
+                        HStack {
+                            ForEach(0..<6, id: \.self) { i in
+                                if i > 0 { Spacer() }
+                                Circle()
+                                    .fill(Color.rBlackWarm.opacity(0.4))
+                                    .frame(width: 5, height: 5)
+                            }
+                        }
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 60)
+                        .padding(.bottom, 10)
                     }
 
                     Spacer()
