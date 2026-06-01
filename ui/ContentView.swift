@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AlarmSettings.self) private var settings
+    @AppStorage("has_completed_onboarding") private var hasCompletedOnboarding = false
     @State private var isReady = false
 
     var body: some View {
@@ -9,7 +10,7 @@ struct ContentView: View {
         if !isReady {
             SplashView()
                 .task { await prepareApp() }
-        } else if settings.hasCompletedOnboarding {
+        } else if hasCompletedOnboarding {
             HomeView()
                 .fullScreenCover(isPresented: $s.pendingWakeUp) {
                     WakeUpView { s.pendingWakeUp = false }

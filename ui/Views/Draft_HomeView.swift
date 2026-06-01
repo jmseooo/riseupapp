@@ -1,7 +1,10 @@
 import SwiftUI
 import Combine
 
-struct HomeView: View {
+// 디자인 실험용 파일 — 기존 HomeView.swift에 영향 없음
+// 완성되면 HomeView.swift에 적용
+
+struct Draft_HomeView: View {
     @Environment(AlarmSettings.self) private var settings
     @State private var now = Date()
     private let weather = WeatherService.shared
@@ -9,7 +12,6 @@ struct HomeView: View {
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     @State private var showAppSettings = false
-    @State private var isSunriseExpanded = false
 
     var body: some View {
         NavigationStack {
@@ -20,7 +22,6 @@ struct HomeView: View {
                 )
 
                 VStack(spacing: 0) {
-                    // ── Weather row ────────────────────────────────────────
                     HStack(alignment: .top, spacing: 0) {
                         temperatureView
                         Spacer()
@@ -38,7 +39,6 @@ struct HomeView: View {
                     .padding(.horizontal, DS.hPad)
                     .padding(.top, 8)
 
-                    // ── Divider ────────────────────────────────────────────
                     Rectangle()
                         .fill(Color.rDivider)
                         .frame(height: 1)
@@ -46,7 +46,6 @@ struct HomeView: View {
 
                     Spacer()
 
-                    // ── Sunrise time ───────────────────────────────────────
                     VStack(alignment: .leading, spacing: 0) {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(dayLabel)
@@ -64,21 +63,13 @@ struct HomeView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
                             Spacer()
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    isSunriseExpanded.toggle()
-                                }
-                            } label: {
-                                Image(systemName: isSunriseExpanded ? "chevron.down" : "chevron.up")
-                                    .font(.system(size: 22, weight: .medium))
-                                    .foregroundStyle(Color.rBlackWarm)
-                            }
+                            Image(systemName: "chevron.up")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundStyle(Color.rBlackWarm)
                         }
-
                     }
                     .padding(.horizontal, DS.hPad)
 
-                    // ── Countdown ──────────────────────────────────────────
                     if let cd = countdownText {
                         Text(cd)
                             .font(.prompt(18))
@@ -88,26 +79,12 @@ struct HomeView: View {
                             .padding(.top, 10)
                     }
 
-                    if isSunriseExpanded {
-                        Color.clear.frame(height: 10)
-                    }
-
                     Spacer()
 
-                    // ── Debug info ────────────────────────────────────────
-                    Text(debugInfo)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.gray)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, DS.hPad)
-                        .padding(.bottom, 8)
-
-                    // ── Alarm card ─────────────────────────────────────────
                     alarmCard
                         .padding(.horizontal, DS.hPad)
                         .padding(.bottom, 16)
 
-                    // ── Bottom nav ─────────────────────────────────────────
                     bottomNav
                         .padding(.bottom, 24)
                 }
@@ -116,15 +93,6 @@ struct HomeView: View {
             .onReceive(ticker) { now = $0 }
             .sheet(isPresented: $showAppSettings) {
                 AppSettingsView()
-            }
-            .task {
-                LocationManager.shared.updateLocation()
-                await WeatherService.shared.fetch(latitude: settings.latitude, longitude: settings.longitude)
-                guard settings.isEnabled else { return }
-                let pending = await NotificationManager.shared.pendingSunriseAlarm()
-                if pending == nil {
-                    await NotificationManager.shared.scheduleSunriseAlarm()
-                }
             }
         }
     }
@@ -220,30 +188,6 @@ struct HomeView: View {
 
     // MARK: - Helpers
 
-    private var debugInfo: String {
-        let dayF = DateFormatter()
-        dayF.dateFormat = "M/d (EEE)"
-        dayF.timeZone = settings.locationTimezone
-        let dateStr = dayF.string(from: now)
-
-        let sunriseStr: String
-        if let sunrise = settings.nextSunriseTime {
-            let tf = DateFormatter()
-            tf.dateFormat = "H:mm"
-            tf.timeZone = settings.locationTimezone
-            sunriseStr = tf.string(from: sunrise)
-        } else {
-            sunriseStr = "--:--"
-        }
-
-        let tempStr = weather.current.map { "\(Int($0.temperature.rounded()))°C" } ?? "--°C"
-        let codeStr = weather.current.map { "WMO:\($0.weatherCode)" } ?? "WMO:--"
-        let cloudStr = weather.current.map { "cloud:\($0.cloudCover)%" } ?? "cloud:--"
-        let lat = String(format: "%.2f", settings.latitude)
-        let lon = String(format: "%.2f", settings.longitude)
-        return "일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))"
-    }
-
     private var timeString: String {
         guard let sunrise = settings.nextSunriseTime else { return "--:--" }
         let f = DateFormatter()
@@ -270,8 +214,6 @@ struct HomeView: View {
         if h > 0 { return "The sun will rise in \(h)h \(m)m." }
         return "The sun will rise in \(m)m."
     }
-
-    // MARK: - Weather helpers
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: now)
@@ -301,10 +243,9 @@ struct HomeView: View {
         default:         return "sun.max.fill"
         }
     }
-
 }
 
 #Preview {
-    HomeView()
+    Draft_HomeView()
         .environment(AlarmSettings.shared)
 }
