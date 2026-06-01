@@ -10,6 +10,8 @@ struct HomeView: View {
 
     @State private var showAppSettings = false
     @State private var isSunriseExpanded = false
+    @State private var dragStartMinutes: Int = 0
+    @State private var isDragging: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -48,13 +50,28 @@ struct HomeView: View {
 
                     // ── Sunrise time ───────────────────────────────────────
                     VStack(alignment: .leading, spacing: 0) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(dayLabel)
-                                .font(.pretendard(13, weight: .semibold))
-                                .foregroundStyle(Color.rTextSub)
-                            Text("sunrise time")
-                                .font(.pretendard(13, weight: .semibold))
-                                .foregroundStyle(Color.rTextSub)
+                        HStack(alignment: .bottom) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(dayLabel)
+                                    .font(.pretendard(13, weight: .semibold))
+                                    .foregroundStyle(Color.rTextSub)
+                                Text("sunrise time")
+                                    .font(.pretendard(13, weight: .semibold))
+                                    .foregroundStyle(Color.rTextSub)
+                            }
+                            Spacer()
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    settings.offsetMinutes = 0
+                                }
+                            } label: {
+                                Text("reset")
+                                    .font(.pretendard(13, weight: .semibold))
+                                    .foregroundStyle(Color.rTextSub)
+                            }
+                            .opacity(settings.offsetMinutes != 0 ? 1 : 0)
+                            .disabled(settings.offsetMinutes == 0)
+                            .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
                         }
 
                         HStack(alignment: .center) {
@@ -93,13 +110,30 @@ struct HomeView: View {
                             ForEach(0..<6, id: \.self) { i in
                                 if i > 0 { Spacer() }
                                 Circle()
-                                    .fill(Color.rBlackWarm.opacity(0.4))
-                                    .frame(width: 5, height: 5)
+                                    .fill(Color.rBlackWarm.opacity(i == activeDotIndex ? 1.0 : 0.3))
+                                    .frame(
+                                        width:  i == activeDotIndex ? 7 : 5,
+                                        height: i == activeDotIndex ? 7 : 5
+                                    )
                             }
                         }
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 60)
                         .padding(.bottom, 10)
+                        .gesture(
+                            DragGesture(minimumDistance: 1)
+                                .onChanged { value in
+                                    if !isDragging {
+                                        isDragging = true
+                                        dragStartMinutes = settings.offsetMinutes
+                                    }
+                                    let delta = Int(value.translation.width / 3)
+                                    settings.offsetMinutes = max(-120, min(120, dragStartMinutes + delta))
+                                }
+                                .onEnded { _ in
+                                    isDragging = false
+                                }
+                        )
                     }
 
                     Spacer()
@@ -256,10 +290,16 @@ struct HomeView: View {
 
     private var timeString: String {
         guard let sunrise = settings.nextSunriseTime else { return "--:--" }
+        let adjusted = sunrise.addingTimeInterval(Double(settings.offsetMinutes) * 60)
         let f = DateFormatter()
         f.dateFormat = "H:mm"
         f.timeZone = settings.locationTimezone
-        return f.string(from: sunrise)
+        return f.string(from: adjusted)
+    }
+
+    private var activeDotIndex: Int {
+        let pct = Double(settings.offsetMinutes + 120) / 240.0
+        return max(0, min(5, Int(pct * 5.5)))
     }
 
     private var dayLabel: String {
