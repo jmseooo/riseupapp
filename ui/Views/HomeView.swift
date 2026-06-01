@@ -10,8 +10,10 @@ struct HomeView: View {
 
     @State private var showAppSettings = false
     @State private var isSunriseExpanded = false
-    @State private var dragStartMinutes: Int = 0
-    @State private var isDragging: Bool = false
+    @State private var isPinching: Bool = false
+    @State private var isPinchExpanded: Bool = false
+    @State private var wobble: CGFloat = 0
+    @State private var pinchDotCount: Int = 0
 
     var body: some View {
         NavigationStack {
@@ -80,6 +82,7 @@ struct HomeView: View {
                                 .foregroundStyle(Color.rBlackWarm)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
+                                .offset(x: wobble)
                             Spacer()
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -91,6 +94,37 @@ struct HomeView: View {
                                     .foregroundStyle(Color.rBlackWarm)
                             }
                         }
+                        .gesture(
+                            MagnificationGesture(minimumScaleDelta: 0.01)
+                                .onChanged { _ in
+                                    guard !isPinching else { return }
+                                    isPinching = true
+                                    withAnimation(.easeInOut(duration: 0.08).repeatForever(autoreverses: true)) {
+                                        wobble = 5
+                                    }
+                                }
+                                .onEnded { _ in
+                                    isPinching = false
+                                    withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) {
+                                        wobble = 0
+                                    }
+                                    isPinchExpanded.toggle()
+                                    if isPinchExpanded {
+                                        pinchDotCount = 0
+                                        for i in 1...10 {
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
+                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                                    pinchDotCount = i
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                                            pinchDotCount = 0
+                                        }
+                                    }
+                                }
+                        )
 
                     }
                     .padding(.horizontal, DS.hPad)
@@ -103,37 +137,6 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, DS.hPad)
                             .padding(.top, 10)
-                    }
-
-                    if isSunriseExpanded {
-                        HStack {
-                            ForEach(0..<6, id: \.self) { i in
-                                if i > 0 { Spacer() }
-                                Circle()
-                                    .fill(Color.rBlackWarm.opacity(i == activeDotIndex ? 1.0 : 0.3))
-                                    .frame(
-                                        width:  i == activeDotIndex ? 7 : 5,
-                                        height: i == activeDotIndex ? 7 : 5
-                                    )
-                            }
-                        }
-                        .padding(.horizontal, DS.hPad)
-                        .padding(.top, 60)
-                        .padding(.bottom, 10)
-                        .gesture(
-                            DragGesture(minimumDistance: 1)
-                                .onChanged { value in
-                                    if !isDragging {
-                                        isDragging = true
-                                        dragStartMinutes = settings.offsetMinutes
-                                    }
-                                    let delta = Int(value.translation.width / 3)
-                                    settings.offsetMinutes = max(-120, min(120, dragStartMinutes + delta))
-                                }
-                                .onEnded { _ in
-                                    isDragging = false
-                                }
-                        )
                     }
 
                     Spacer()
@@ -154,6 +157,23 @@ struct HomeView: View {
                     // ── Bottom nav ─────────────────────────────────────────
                     bottomNav
                         .padding(.bottom, 24)
+                }
+
+                // ── Pinch dots (right side) ────────────────────────────
+                if pinchDotCount > 0 {
+                    VStack(spacing: 10) {
+                        Spacer()
+                        ForEach(0..<pinchDotCount, id: \.self) { _ in
+                            Circle()
+                                .fill(Color.rBlackWarm.opacity(0.45))
+                                .frame(width: 5, height: 5)
+                        }
+                        Spacer().frame(height: 220)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 22)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
                 }
             }
             .navigationBarHidden(true)
@@ -295,11 +315,6 @@ struct HomeView: View {
         f.dateFormat = "H:mm"
         f.timeZone = settings.locationTimezone
         return f.string(from: adjusted)
-    }
-
-    private var activeDotIndex: Int {
-        let pct = Double(settings.offsetMinutes + 120) / 240.0
-        return max(0, min(5, Int(pct * 5.5)))
     }
 
     private var dayLabel: String {
