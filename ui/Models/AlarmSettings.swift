@@ -58,22 +58,22 @@ final class AlarmSettings {
     }
 
     var todaySunriseTime: Date? {
+        if let s = WeatherService.shared.sunriseToday { return s }
         let now = Date()
         guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
         return SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: utcNoon(year: y, month: m, day: d))
     }
 
-    // 오늘 일출이 안 지났으면 오늘, 지났으면 내일 일출 시간
+    // WeatherKit 우선, 없으면 NOAA 계산 fallback
     var nextSunriseTime: Date? {
         let now = Date()
+        let svc = WeatherService.shared
+        if let s = svc.sunriseToday, s > now { return s }
+        if let s = svc.sunriseTomorrow { return s }
+
         guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
-
         let todayNoon = utcNoon(year: y, month: m, day: d)
-        if let todaySunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: todayNoon),
-           todaySunrise > now {
-            return todaySunrise
-        }
-
+        if let s = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: todayNoon), s > now { return s }
         var utcCal = Calendar(identifier: .gregorian)
         utcCal.timeZone = TimeZone(identifier: "UTC")!
         let tomorrowNoon = utcCal.date(byAdding: .day, value: 1, to: todayNoon)!
@@ -81,20 +81,9 @@ final class AlarmSettings {
     }
 
     var nextAlarmTime: Date? {
-        let now = Date()
-        guard let y = localYear(from: now), let m = localMonth(from: now), let d = localDay(from: now) else { return nil }
-
-        let todayNoon = utcNoon(year: y, month: m, day: d)
-        if let todaySunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: todayNoon) {
-            let alarmTime = todaySunrise.addingTimeInterval(Double(offsetMinutes) * 60)
-            if alarmTime > now { return alarmTime }
-        }
-
-        var utcCal = Calendar(identifier: .gregorian)
-        utcCal.timeZone = TimeZone(identifier: "UTC")!
-        let tomorrowNoon = utcCal.date(byAdding: .day, value: 1, to: todayNoon)!
-        guard let tomorrowSunrise = SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: tomorrowNoon) else { return nil }
-        return tomorrowSunrise.addingTimeInterval(Double(offsetMinutes) * 60)
+        guard let sunrise = nextSunriseTime else { return nil }
+        let alarm = sunrise.addingTimeInterval(Double(offsetMinutes) * 60)
+        return alarm > Date() ? alarm : nil
     }
 
     // MARK: - Wake history helpers
