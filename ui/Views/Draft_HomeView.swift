@@ -16,7 +16,7 @@ struct Draft_HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherThemeBackground(
+                Draft_WeatherThemeBackground(
                     weather: weather.current,
                     hour: Calendar.current.component(.hour, from: now)
                 )
