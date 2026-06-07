@@ -123,38 +123,17 @@ struct HomeView: View {
 
                 // ── Pinch dots (right side) ────────────────────────────
                 if pinchDotCount > 0 {
-                    // 햇살 방사형 선 — 중심: 오른쪽 끝, 45% 높이
-                    // 180° 기준 좌우 15° 간격 13개, 안쪽에서 바깥으로 퍼짐
-                    Canvas { ctx, size in
-                        let cx = size.width
-                        let cy = size.height * 0.45
-                        let innerR: CGFloat = 28
-                        let outerR: CGFloat = min(size.width * 0.56, 210)
-                        let angles: [Double] = [
-                            180, 165, 195, 150, 210,
-                            135, 225, 120, 240, 105,
-                            255,  90, 270
-                        ]
-                        let count = min(pinchDotCount, angles.count)
-                        for i in 0..<count {
-                            let rad = angles[i] * .pi / 180
-                            var path = Path()
-                            path.move(to: CGPoint(
-                                x: cx + cos(rad) * innerR,
-                                y: cy + sin(rad) * innerR
-                            ))
-                            path.addLine(to: CGPoint(
-                                x: cx + cos(rad) * outerR,
-                                y: cy + sin(rad) * outerR
-                            ))
-                            ctx.stroke(
-                                path,
-                                with: .color(Color.rBlackWarm.opacity(0.45)),
-                                style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
-                            )
+                    VStack(spacing: 30) {
+                        Spacer().frame(height: 108)
+                        ForEach(0..<pinchDotCount, id: \.self) { _ in
+                            Circle()
+                                .fill(Color.rBlackWarm.opacity(0.45))
+                                .frame(width: 5, height: 5)
                         }
+                        Spacer().frame(height: 192)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    .padding(.trailing, 22)
                     .allowsHitTesting(false)
                     .transition(.opacity)
                 }
@@ -178,8 +157,8 @@ struct HomeView: View {
                         isPinchExpanded.toggle()
                         if isPinchExpanded {
                             pinchDotCount = 0
-                            for i in 1...13 {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
+                            for i in 1...15 {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
                                     withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                                         pinchDotCount = i
                                     }
