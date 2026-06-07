@@ -24,6 +24,7 @@ struct GlassTimeTextA: View {
             .overlay {
                 TimelineView(.animation) { tl in
                     Canvas { ctx, size in
+
                         let t   = tl.date.timeIntervalSinceReferenceDate
                         let sw  = UIScreen.main.bounds.width
                         let sh  = UIScreen.main.bounds.height
@@ -74,6 +75,7 @@ struct GlassTimeTextA: View {
                         ctx.draw(resolved, at: mid, anchor: .center)
                     }
                 }
+                .allowsHitTesting(false)
             }
             .lineLimit(1)
             .minimumScaleFactor(0.6)
