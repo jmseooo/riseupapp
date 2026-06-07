@@ -123,7 +123,7 @@ struct HomeView: View {
 
                 // ── Pinch dots (right side) ────────────────────────────
                 if pinchDotCount > 0 {
-                    VStack(spacing: 30) {
+                    VStack(spacing: 28) {
                         Spacer().frame(height: 100)
                         ForEach(0..<pinchDotCount, id: \.self) { _ in
                             Circle()
