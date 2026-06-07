@@ -1,10 +1,8 @@
-import WeatherKit
-import CoreLocation
 import Foundation
 
 struct WeatherData {
     let temperature: Double  // °C
-    let weatherCode: Int     // WMO-mapped from WeatherCondition
+    let weatherCode: Int     // WMO code
     let windSpeed: Double    // km/h
     let humidity: Int        // %
     let cloudCover: Int      // %
@@ -27,60 +25,63 @@ final class WeatherService {
         isLoading = true
         defer { isLoading = false }
 
-        let location = CLLocation(latitude: latitude, longitude: longitude)
+        let urlStr = "https://api.open-meteo.com/v1/forecast"
+            + "?latitude=\(latitude)&longitude=\(longitude)"
+            + "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,cloud_cover"
+            + "&daily=sunrise,sunset"
+            + "&timezone=auto&forecast_days=2"
+
+        guard let url = URL(string: urlStr) else { return }
 
         do {
-            let weather = try await WeatherKit.WeatherService.shared.weather(
-                for: location,
-                including: .current, .daily
-            )
-            let c = weather.0
-            let daily = weather.1
-
-            print("[WeatherService] temp: \(c.temperature), condition: \(c.condition)")
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let resp = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
+            let c = resp.current
 
             current = WeatherData(
-                temperature: c.temperature.converted(to: .celsius).value,
-                weatherCode: conditionToWMO(c.condition as WeatherKit.WeatherCondition),
-                windSpeed: c.wind.speed.converted(to: .kilometersPerHour).value,
-                humidity: Int((c.humidity * 100).rounded()),
-                cloudCover: Int((c.cloudCover * 100).rounded())
+                temperature: c.temperature_2m,
+                weatherCode: c.weather_code,
+                windSpeed: c.wind_speed_10m,
+                humidity: c.relative_humidity_2m,
+                cloudCover: c.cloud_cover
             )
 
-            let cal = Calendar.current
-            let tomorrow = cal.date(byAdding: .day, value: 1, to: Date())!
-            sunriseToday    = daily.first(where: { cal.isDateInToday($0.date) })?.sun.sunrise
-            sunriseTomorrow = daily.first(where: { cal.isDate($0.date, inSameDayAs: tomorrow) })?.sun.sunrise
+            utcOffsetSeconds = resp.utc_offset_seconds
 
-            let offsetHours = Int(round(longitude / 15.0))
-            utcOffsetSeconds = offsetHours * 3600
+            let fmt = DateFormatter()
+            fmt.dateFormat = "yyyy-MM-dd'T'HH:mm"
+            fmt.timeZone = TimeZone(secondsFromGMT: resp.utc_offset_seconds ?? 0)
+
+            if let sunrises = resp.daily?.sunrise {
+                if sunrises.count >= 1 { sunriseToday    = fmt.date(from: sunrises[0]) }
+                if sunrises.count >= 2 { sunriseTomorrow = fmt.date(from: sunrises[1]) }
+            }
+
             lastError = nil
+            print("[WeatherService] temp: \(c.temperature_2m)°C, code: \(c.weather_code)")
         } catch {
             lastError = error.localizedDescription
             print("[WeatherService] fetch error: \(error.localizedDescription)")
         }
     }
+}
 
-    private func conditionToWMO(_ condition: WeatherKit.WeatherCondition) -> Int {
-        switch condition.rawValue {
-        case "clear":                                                    return 0
-        case "mostlyClear", "hot", "breezy", "windy", "frigid":         return 1
-        case "partlyCloudy":                                             return 2
-        case "mostlyCloudy", "cloudy":                                   return 3
-        case "foggy", "haze", "smoky", "blowingDust":                   return 45
-        case "drizzle":                                                  return 51
-        case "rain":                                                     return 61
-        case "heavyRain":                                                return 65
-        case "sunShowers":                                               return 80
-        case "freezingDrizzle":                                          return 56
-        case "freezingRain":                                             return 66
-        case "sleet", "wintryMix":                                       return 77
-        case "flurries", "snow", "sunFlurries":                          return 71
-        case "heavySnow", "blowingSnow", "blizzard":                     return 75
-        case "hail":                                                     return 96
-        case "isolatedThunderstorms", "thunderstorms", "scatteredThunderstorms": return 95
-        case "strongStorms", "tropicalStorm", "hurricane":               return 99
-        default:                                                         return 0
-        }
+// MARK: - Open-Meteo response models
+
+private struct OpenMeteoResponse: Codable {
+    let current: Current
+    let daily: Daily?
+    let utc_offset_seconds: Int?
+
+    struct Current: Codable {
+        let temperature_2m: Double
+        let relative_humidity_2m: Int
+        let weather_code: Int
+        let wind_speed_10m: Double
+        let cloud_cover: Int
+    }
+
+    struct Daily: Codable {
+        let sunrise: [String]?
     }
 }
