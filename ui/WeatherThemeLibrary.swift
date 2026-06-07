@@ -181,7 +181,7 @@ struct WeatherThemeLibrary {
             orb(size: 115, "B582CC", "8E5DAE"),
             orb(size:  95, "FFC596", "ECA876"),
             orb(size:  60, "7A5CB0", "5A4290"),
-        ], blur: 50, opacity: 0.65, dur: 3, turb: 0.9, pulse: true, count: 3...5),
+        ], blur: 50, opacity: 0.65, dur: 1.8, turb: 0.9, pulse: true, count: 3...5),
 
         // Pale, dreamy — slow float, many small blobs like falling flakes.
         "snow": makeTheme("snow", angle: 180, bg: "F4F8FB", "E5EEF4", orbs: [

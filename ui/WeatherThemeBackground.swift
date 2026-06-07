@@ -85,8 +85,8 @@ private struct AnimatedBlob: View {
     }
 
     // Turbulence — quadratic scaling so high values (0.8+) are dramatically more chaotic
-    private var turbAmpX: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.14 * size.width  }
-    private var turbAmpY: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.14 * size.height }
+    private var turbAmpX: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.18 * size.width  }
+    private var turbAmpY: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.18 * size.height }
     private var turbDirX: CGFloat { (index % 2 == 0) ?  1 : -1 }
     private var turbDirY: CGFloat { (index % 3 == 0) ?  1 : -1 }
 
@@ -143,13 +143,13 @@ private struct AnimatedBlob: View {
 
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(sx))
-            withAnimation(.easeInOut(duration: durationX).repeatForever(autoreverses: true)) {
+            withAnimation(driftAnimation(durationX).repeatForever(autoreverses: true)) {
                 phaseX = true
             }
         }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(sy))
-            withAnimation(.easeInOut(duration: durationY).repeatForever(autoreverses: true)) {
+            withAnimation(driftAnimation(durationY).repeatForever(autoreverses: true)) {
                 phaseY = true
             }
         }
@@ -157,13 +157,13 @@ private struct AnimatedBlob: View {
         if params.turbulence > 0.05 {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(st))
-                withAnimation(.easeInOut(duration: turbDuration).repeatForever(autoreverses: true)) {
+                withAnimation(driftAnimation(turbDuration).repeatForever(autoreverses: true)) {
                     turbX = true
                 }
             }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(st + 0.12))
-                withAnimation(.easeInOut(duration: turbDuration * 1.35).repeatForever(autoreverses: true)) {
+                withAnimation(driftAnimation(turbDuration * 1.35).repeatForever(autoreverses: true)) {
                     turbY = true
                 }
             }
@@ -171,12 +171,18 @@ private struct AnimatedBlob: View {
 
         if params.pulseEnabled {
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(Double(index % 5) * 0.10))
-                withAnimation(.easeInOut(duration: 0.6 + Double(index % 3) * 0.2).repeatForever(autoreverses: true)) {
+                try? await Task.sleep(for: .seconds(Double(index % 5) * 0.08))
+                withAnimation(.easeInOut(duration: 0.4 + Double(index % 3) * 0.15).repeatForever(autoreverses: true)) {
                     pulsed = true
                 }
             }
         }
+    }
+
+    private func driftAnimation(_ duration: Double) -> Animation {
+        params.turbulence > 0.7
+            ? .linear(duration: duration)
+            : .easeInOut(duration: duration)
     }
 }
 
