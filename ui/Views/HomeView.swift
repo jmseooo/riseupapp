@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var wobble: CGFloat = 0
     @State private var floatY: CGFloat = 0
     @State private var pinchDotCount: Int = 0
+    @State private var dragStartOffset: Int? = nil
 
     var body: some View {
         NavigationStack {
@@ -121,20 +122,47 @@ struct HomeView: View {
                         .padding(.bottom, 24)
                 }
 
-                // ── Pinch dots (right side) ────────────────────────────
+                // ── Pinch dots + drag to offset time (right side) ─────
                 if pinchDotCount > 0 {
-                    VStack(spacing: 30) {
-                        Spacer().frame(height: 108)
-                        ForEach(0..<pinchDotCount, id: \.self) { _ in
-                            Circle()
-                                .fill(Color.rBlackWarm.opacity(0.45))
-                                .frame(width: 5, height: 5)
+                    ZStack(alignment: .trailing) {
+                        // 시각적 도트 (터치 비활성)
+                        VStack(spacing: 30) {
+                            Spacer().frame(height: 108)
+                            ForEach(0..<pinchDotCount, id: \.self) { _ in
+                                Circle()
+                                    .fill(Color.rBlackWarm.opacity(0.45))
+                                    .frame(width: 5, height: 5)
+                            }
+                            Spacer().frame(height: 192)
                         }
-                        Spacer().frame(height: 192)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .padding(.trailing, 22)
+                        .allowsHitTesting(false)
+
+                        // 드래그 입력 영역 (도트 위 우측 스트립)
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .frame(width: 60)
+                            .padding(.top, 108)
+                            .padding(.bottom, 192)
+                            .gesture(
+                                DragGesture(minimumDistance: 8)
+                                    .onChanged { value in
+                                        if dragStartOffset == nil {
+                                            dragStartOffset = settings.offsetMinutes
+                                        }
+                                        // 40pt 드래그 = 10분
+                                        let steps = Int(value.translation.height / 40)
+                                        let newOffset = (dragStartOffset ?? 0) - steps * 10
+                                        withAnimation(.easeOut(duration: 0.08)) {
+                                            settings.offsetMinutes = newOffset
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        dragStartOffset = nil
+                                    }
+                            )
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                    .padding(.trailing, 22)
-                    .allowsHitTesting(false)
                     .transition(.opacity)
                 }
             }
