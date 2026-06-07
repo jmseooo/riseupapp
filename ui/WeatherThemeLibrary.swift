@@ -285,8 +285,11 @@ struct WeatherThemeLibrary {
         switch wmoCode {
         case 0, 1:
             switch hour {
-            case 5...8, 17...20: return t["sunrise"]!
+            case 5:              return t["sunrise"]!       // pre-dawn 어스름한 블루
+            case 6...8:          return t["sunrise-warm"]!  // 실제 일출 — 웜 오렌지 글로우
             case 9...16:         return t["clear-day"]!
+            case 17...19:        return t["sunrise-warm"]!  // 황금빛 저녁
+            case 20:             return t["sunrise"]!       // 해 진 직후 블루-라벤더
             default:             return t["clear-night"]!
             }
         case 2:           return t["partly-cloudy"]!
