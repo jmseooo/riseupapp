@@ -124,15 +124,15 @@ struct HomeView: View {
                 // ── Pinch dots (right side) ────────────────────────────
                 if pinchDotCount > 0 {
                     VStack(spacing: 8) {
-                        Spacer()
+                        Spacer().frame(height: 80)
                         ForEach(0..<pinchDotCount, id: \.self) { _ in
                             Circle()
                                 .fill(Color.rBlackWarm.opacity(0.45))
                                 .frame(width: 5, height: 5)
                         }
-                        Spacer().frame(height: 120)
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                     .padding(.trailing, 22)
                     .allowsHitTesting(false)
                     .transition(.opacity)
@@ -157,8 +157,8 @@ struct HomeView: View {
                         isPinchExpanded.toggle()
                         if isPinchExpanded {
                             pinchDotCount = 0
-                            for i in 1...20 {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
+                            for i in 1...50 {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.03) {
                                     withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                                         pinchDotCount = i
                                     }
