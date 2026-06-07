@@ -287,227 +287,149 @@ private struct DraftOrb: View {
     }
 }
 
-// MARK: - Draft Palette ("Rise Daybreak" 영상 픽셀 직접 추출)
+// MARK: - Draft Palette (20가지 날씨 × 3블롭 삼각 배치)
 //
-// 샘플링 좌표별 평균값:
-//   cr = #FFF5CC  크림베이스   — 상단 밝은 영역 (Frame2,3,5 top)
-//   yL = #FDF0C0  라이트버터   — 상단 중간 영역
-//   yM = #FAD28A  골든옐로우   — 중심 주인공 블롭 (Frame2-6 center)
-//   yD = #F8BA80  딥앰버피치   — yM과 pc 사이 전환
-//   am = #F8D8A8  웜앰버크림   — 중간 전환 영역
-//   pc = #F5BEA0  소프트피치   — 하단 전환색 (Frame3 bot-right)
-//   co = #F2A898  소프트코랄   — 하단 코너 (Frame4,6 bot-right 계열)
-//   ro = #F4B8C8  소프트로즈   — 핑크 블롭 (Frame1 top-center, Frame2,5,6 top-right)
+// 웜톤: 새벽·맑음·구름조금·폭염·연무·먼지  →  Rise Daybreak 원색 (cr/yL/yM/am/pc/co/ro)
+// 쿨톤: 흐림·안개·이슬비·비·눈·바람         →  블루-화이트 계열 (fw/lb/sb/gb/ic)
+// 다크: 천둥·맑은밤                          →  네이비-바이올렛 계열 (dn/nv/mv)
+// 특수: 폭염·연무·먼지·연기·바람            →  hz/sm/hw/ht/wt/ar
 
 private struct DraftPalette {
     let meshColorsA: [Color]
     let meshColorsB: [Color]
 
+    // ── 웜톤 (Rise Daybreak 원색)
     private static let cr = dc("FFF5CC")   // 크림베이스
     private static let yL = dc("FDF0C0")   // 라이트버터
-    private static let yM = dc("FAD28A")   // 골든옐로우 (메인 블롭)
-    private static let yD = dc("F8BA80")   // 딥앰버피치
+    private static let yM = dc("FAD28A")   // 골든옐로우
     private static let am = dc("F8D8A8")   // 웜앰버크림
     private static let pc = dc("F5BEA0")   // 소프트피치
     private static let co = dc("F2A898")   // 소프트코랄
-    private static let ro = dc("F4B8C8")   // 소프트로즈 (핑크 블롭)
+    private static let ro = dc("F4B8C8")   // 소프트로즈
+
+    // ── 쿨톤 (비·구름·눈)
+    private static let fw = dc("EEF5FC")   // 프로스트화이트
+    private static let lb = dc("C4DCF0")   // 라이트블루
+    private static let sb = dc("A0C0E4")   // 소프트블루
+    private static let gb = dc("B0C4D8")   // 그레이블루
+    private static let ic = dc("D4ECF8")   // 아이스블루
+
+    // ── 다크톤 (천둥·밤)
+    private static let dn = dc("1C2248")   // 딥네이비
+    private static let nv = dc("2C3464")   // 네이비
+    private static let mv = dc("48507C")   // 미드바이올렛
+
+    // ── 특수 조건
+    private static let hz = dc("E0D0BC")   // 웜헤이즈 (연무·스모그)
+    private static let sm = dc("C8BAA0")   // 스모크탠 (연기·먼지)
+    private static let hw = dc("F09060")   // 히트웨이브오렌지
+    private static let ht = dc("E85840")   // 핫레드 (폭염)
+    private static let wt = dc("B4D8D0")   // 윈드틸 (바람 후 상쾌)
+    private static let ar = dc("C4E8DC")   // 애프터레인 (소나기 후)
+
+    // A:b1(상단우)/b2(중심)/b3(하단좌)  →  B:b2(상단우)/b3(중심)/b1(하단좌) — 시계방향 회전
+    private static func tri(_ bg: Color, _ b1: Color, _ b2: Color, _ b3: Color) -> DraftPalette {
+        DraftPalette(
+            meshColorsA: [
+                bg,  b1,  b1,
+                bg,  b1,  b2,
+                b2,  b2,  bg,
+                b3,  b3,  bg,
+                b3,  bg,  bg,
+            ],
+            meshColorsB: [
+                bg,  b2,  b2,
+                bg,  b2,  b3,
+                b3,  b3,  bg,
+                b1,  b1,  bg,
+                b1,  bg,  bg,
+            ]
+        )
+    }
 
     static func palette(for themeId: String) -> DraftPalette {
-        let cr = Self.cr, yL = Self.yL, yM = Self.yM, yD = Self.yD
-        let am = Self.am, pc = Self.pc, co = Self.co, ro = Self.ro
-
         switch themeId {
 
-        // 새벽 — 로즈(상단우) + 골드(중심) + 피치(하단좌) 삼각 배치
-        // A→B: 각 블롭이 시계방향으로 위치 교체 → 회전하는 것처럼 보임
+        // ── 웜톤 계열 ──────────────────────────────────────────
         case "sunrise":
-            return DraftPalette(
-                meshColorsA: [
-                    yL,   ro,   ro,   // 상단우: 로즈 블롭
-                    cr,   ro,   yM,
-                    cr,   yM,   yM,   // 중심: 골드 블롭
-                    pc,   pc,   cr,
-                    pc,   pc,   cr,   // 하단좌: 피치 블롭
-                ],
-                meshColorsB: [
-                    yM,   yM,   yL,   // 상단좌: 골드 블롭
-                    yM,   pc,   cr,
-                    cr,   pc,   pc,   // 중심우: 피치 블롭
-                    ro,   cr,   ro,
-                    ro,   cr,   cr,   // 하단좌: 로즈 블롭
-                ]
-            )
+            return tri(yL, ro, yM, pc)        // 로즈+골드+피치
 
-        // 맑은 낮 — 골드(상단좌) + 로즈(우) + 피치(하단)
         case "clear-day":
-            return DraftPalette(
-                meshColorsA: [
-                    yM,   yM,   cr,   // 상단좌: 골드 블롭
-                    yM,   cr,   ro,
-                    cr,   cr,   ro,   // 우: 로즈 블롭
-                    am,   pc,   cr,
-                    pc,   pc,   cr,   // 하단: 피치 블롭
-                ],
-                meshColorsB: [
-                    cr,   ro,   ro,   // 상단우: 로즈 블롭
-                    cr,   yM,   cr,
-                    yM,   yM,   cr,   // 좌: 골드 블롭
-                    cr,   cr,   pc,
-                    am,   cr,   pc,   // 하단우: 피치 블롭
-                ]
-            )
+            return tri(cr, yM, ro, am)        // 골드+로즈+앰버
 
-        // 구름 조금 — 로즈(상) + 앰버(중) + 피치(하) 수직 배치
         case "partly-cloudy":
-            return DraftPalette(
-                meshColorsA: [
-                    cr,   ro,   ro,   // 상단: 로즈 블롭
-                    cr,   ro,   cr,
-                    am,   am,   cr,   // 중심: 앰버 블롭
-                    cr,   pc,   cr,
-                    pc,   pc,   cr,   // 하단: 피치 블롭
-                ],
-                meshColorsB: [
-                    ro,   ro,   cr,   // 상단좌: 로즈 (반대편)
-                    cr,   am,   cr,
-                    cr,   am,   am,   // 중심우: 앰버
-                    cr,   cr,   pc,
-                    cr,   pc,   pc,   // 하단우: 피치
-                ]
-            )
+            return tri(cr, ro, am, lb)        // 로즈+앰버+살짝쿨
 
-        // 흐림 — 피치(상좌) + 앰버(중) + 코랄(하우) 차분 삼각
-        case "cloudy", "overcast":
-            return DraftPalette(
-                meshColorsA: [
-                    pc,   pc,   cr,
-                    pc,   cr,   cr,
-                    cr,   am,   cr,
-                    cr,   cr,   co,
-                    cr,   co,   co,
-                ],
-                meshColorsB: [
-                    cr,   cr,   pc,
-                    cr,   pc,   cr,
-                    cr,   cr,   am,
-                    co,   cr,   cr,
-                    co,   co,   cr,
-                ]
-            )
+        case "heat":
+            return tri(cr, hw, ht, yM)        // 오렌지+핫레드+골드
 
-        // 비 — 코랄(상) + 피치(중) + 앰버(하) 차분 삼각
-        case "rain", "drizzle", "showers":
-            return DraftPalette(
-                meshColorsA: [
-                    cr,   co,   co,
-                    cr,   co,   cr,
-                    cr,   pc,   cr,
-                    am,   cr,   cr,
-                    am,   am,   cr,
-                ],
-                meshColorsB: [
-                    co,   co,   cr,
-                    cr,   cr,   co,
-                    cr,   am,   cr,
-                    cr,   pc,   cr,
-                    cr,   cr,   pc,
-                ]
-            )
+        case "hazy":
+            return tri(cr, hz, am, yL)        // 헤이즈+앰버+버터
 
-        // 밤 — 딥 웜브라운 + 골드 포인트
+        case "dust", "sandstorm":
+            return tri(am, sm, hz, co)        // 스모크+헤이즈+코랄
+
+        // ── 쿨톤 계열 ──────────────────────────────────────────
+        case "cloudy":
+            return tri(fw, gb, lb, ic)        // 그레이블루+라이트블루+아이스
+
+        case "overcast":
+            return tri(fw, gb, sb, gb)        // 더 진한 그레이블루
+
+        case "fog", "mist":
+            return tri(fw, lb, fw, ic)        // 거의 흰색, 연한 블루
+
+        case "drizzle":
+            return tri(fw, lb, sb, ic)        // 라이트블루+소프트블루+아이스
+
+        case "rain":
+            return tri(lb, sb, gb, lb)        // 소프트블루+그레이블루
+
+        case "showers":
+            return tri(lb, sb, lb, gb)        // 소나기 (rain보다 밝음)
+
+        case "snow":
+            return tri(fw, ic, lb, fw)        // 아이스+라이트블루+화이트
+
+        case "blizzard":
+            return tri(fw, fw, ic, lb)        // 더 순백 눈보라
+
+        case "frost":
+            return tri(fw, ic, lb, cr)        // 서리 (따뜻한 크림 터치)
+
+        case "hail":
+            return tri(lb, gb, ic, lb)        // 우박 (블루-그레이)
+
+        case "windy":
+            return tri(fw, wt, ar, lb)        // 틸+애프터레인+라이트블루
+
+        case "smoke":
+            return tri(fw, sm, gb, hz)        // 연기 (쿨+웜 믹스)
+
+        // ── 다크톤 계열 ──────────────────────────────────────────
+        case "thunderstorm":
+            return tri(dn, mv, nv, dn)        // 바이올렛+네이비+딥네이비
+
         case "clear-night":
             return DraftPalette(
                 meshColorsA: [
-                    dc("281408"),  dc("D4A020"),  dc("1C0C04"),
-                    dc("D4A020"),  dc("503018"),  dc("281408"),
-                    dc("C89018"),  dc("402010"),  dc("D4A020"),
-                    dc("503018"),  dc("D4A020"),  dc("281408"),
-                    dc("1C0C04"),  dc("D4A020"),  dc("281408"),
+                    dn,            nv,            nv,
+                    dn,            nv,            dc("C8A020"),
+                    dc("C8A020"),  mv,            dn,
+                    mv,            dn,            nv,
+                    dn,            nv,            dn,
                 ],
                 meshColorsB: [
-                    dc("1C0C04"),  dc("C89018"),  dc("281408"),
-                    dc("281408"),  dc("D4A020"),  dc("503018"),
-                    dc("D4A020"),  dc("503018"),  dc("C89018"),
-                    dc("281408"),  dc("503018"),  dc("D4A020"),
-                    dc("281408"),  dc("C89018"),  dc("1C0C04"),
+                    dn,            dc("C8A020"),  nv,
+                    nv,            mv,            dn,
+                    dn,            nv,            mv,
+                    nv,            dn,            dc("C8A020"),
+                    nv,            dn,            dn,
                 ]
             )
 
-        // 천둥 — 딥 웜브라운 + 밝은 골드 (골드 블롭 이동)
-        case "thunderstorm":
-            return DraftPalette(
-                meshColorsA: [
-                    dc("180C04"),  yM,            dc("200E04"),
-                    yM,            dc("5C3010"),  dc("180C04"),
-                    yD,            dc("6C3C14"),  dc("5C3010"),
-                    yM,            dc("5C3010"),  yD,
-                    dc("200E04"),  yM,            dc("180C04"),
-                ],
-                meshColorsB: [
-                    yM,            dc("180C04"),  yD,
-                    dc("180C04"),  yD,            dc("5C3010"),
-                    dc("5C3010"),  yM,            dc("6C3C14"),
-                    yD,            dc("180C04"),  yM,
-                    yM,            dc("200E04"),  yM,
-                ]
-            )
-
-        // 안개·이슬비 — 거의 크림, 아주 연한 피치·앰버 블롭 (시야 좁은 느낌)
-        case "hazy", "mist", "fog", "drizzle":
-            return DraftPalette(
-                meshColorsA: [
-                    cr,   am,   cr,
-                    am,   cr,   pc,
-                    cr,   pc,   cr,
-                    pc,   cr,   am,
-                    cr,   cr,   pc,
-                ],
-                meshColorsB: [
-                    cr,   pc,   cr,
-                    cr,   am,   cr,
-                    pc,   cr,   am,
-                    cr,   pc,   cr,
-                    am,   cr,   cr,
-                ]
-            )
-
-        // 눈·서리 — 크림+버터+로즈 (따뜻한 눈빛)
-        case "snow", "blizzard", "frost":
-            return DraftPalette(
-                meshColorsA: [
-                    cr,   ro,   yL,
-                    ro,   cr,   ro,
-                    yL,   cr,   yL,
-                    cr,   yL,   ro,
-                    yL,   cr,   yL,
-                ],
-                meshColorsB: [
-                    yL,   cr,   ro,
-                    cr,   ro,   cr,
-                    ro,   yL,   cr,
-                    yL,   ro,   cr,
-                    cr,   yL,   cr,
-                ]
-            )
-
-        // 기타
         default:
-            return DraftPalette(
-                meshColorsA: [
-                    am,   pc,   yM,
-                    pc,   yM,   cr,
-                    yM,   yD,   am,
-                    am,   pc,   yM,
-                    yM,   am,   yM,
-                ],
-                meshColorsB: [
-                    pc,   am,   yM,
-                    yM,   cr,   pc,
-                    yD,   yM,   am,
-                    pc,   yM,   am,
-                    am,   yM,   am,
-                ]
-            )
+            return tri(cr, yM, am, pc)
         }
     }
 }
@@ -526,55 +448,55 @@ private struct DraftPalette {
         hour: 6
     )
 }
-#Preview("② 맑은 낮") {     // clear-day — yM+ro+pc, 밝고 빠름
+#Preview("② 맑은 낮") {     // clear-day — 골드+로즈+앰버 (웜)
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 26, weatherCode: 0, windSpeed: 10, humidity: 30, cloudCover: 5),
         hour: 13
     )
 }
-#Preview("③ 구름 조금") {   // partly-cloudy — ro+am+pc
+#Preview("③ 구름 조금") {   // partly-cloudy — 로즈+앰버+살짝쿨블루
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 22, weatherCode: 2, windSpeed: 12, humidity: 45, cloudCover: 35),
         hour: 12
     )
 }
-#Preview("④ 흐림") {        // cloudy — pc+am+co, 채도·밝기 살짝 낮춤
+#Preview("④ 흐림") {        // cloudy — 그레이블루+라이트블루+아이스
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 18, weatherCode: 3, windSpeed: 10, humidity: 65, cloudCover: 80),
         hour: 14
     )
 }
-#Preview("⑤ 안개") {        // hazy — cr+am+pc, 블러 최대, 매우 연함
+#Preview("⑤ 안개") {        // fog — 거의 화이트, 연한 블루 블롭
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 14, weatherCode: 45, windSpeed: 3, humidity: 95, cloudCover: 90),
         hour: 9
     )
 }
-#Preview("⑥ 이슬비") {      // drizzle — cr+am+pc (안개와 같은 팔레트, 속도 차이)
+#Preview("⑥ 이슬비") {      // drizzle — 라이트블루+소프트블루+아이스
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 15, weatherCode: 53, windSpeed: 8, humidity: 80, cloudCover: 85),
         hour: 11
     )
 }
-#Preview("⑦ 비") {          // rain — co+pc+am, 코랄 블롭 이동
+#Preview("⑦ 비") {          // rain — 소프트블루+그레이블루
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 16, weatherCode: 63, windSpeed: 22, humidity: 88, cloudCover: 90),
         hour: 15
     )
 }
-#Preview("⑧ 천둥번개") {    // thunderstorm — 딥 웜브라운+골드, 가장 빠름
+#Preview("⑧ 천둥번개") {    // thunderstorm — 바이올렛+네이비+딥네이비, 가장 빠름
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 18, weatherCode: 95, windSpeed: 42, humidity: 92, cloudCover: 95),
         hour: 16
     )
 }
-#Preview("⑨ 눈") {          // snow — cr+yL+ro, 조용한 속도
+#Preview("⑨ 눈") {          // snow — 아이스+라이트블루+프로스트화이트
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: -2, weatherCode: 73, windSpeed: 10, humidity: 75, cloudCover: 88),
         hour: 10
     )
 }
-#Preview("⑩ 맑은 밤") {     // clear-night — 딥 웜브라운+골드 포인트
+#Preview("⑩ 맑은 밤") {     // clear-night — 딥네이비+네이비+골드문 포인트
     Draft_WeatherThemeBackground(
         weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 4, humidity: 55, cloudCover: 5),
         hour: 23
