@@ -355,63 +355,133 @@ private struct DraftPalette {
 //   brightnessScale   ← cloudCover (구름 많을수록 밝기↓)
 //   hueOffset         ← temperature (기온 높을수록 warm 쪽 미세 이동)
 
-#Preview("① 새벽 맑음") {   // sunrise — ro+yM+pc, 조용한 속도
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 16, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 5),
-        hour: 6
-    )
+#Preview("① 새벽 맑음") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 16, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 5),
+            hour: 6
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("② 맑은 낮") {     // clear-day — 골드+로즈+앰버 (웜)
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 26, weatherCode: 0, windSpeed: 10, humidity: 30, cloudCover: 5),
-        hour: 13
-    )
+#Preview("② 맑은 낮") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 26, weatherCode: 0, windSpeed: 10, humidity: 30, cloudCover: 5),
+            hour: 13
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("③ 구름 조금") {   // partly-cloudy — 로즈+앰버+살짝쿨블루
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 22, weatherCode: 2, windSpeed: 12, humidity: 45, cloudCover: 35),
-        hour: 12
-    )
+#Preview("③ 구름 조금") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 22, weatherCode: 2, windSpeed: 12, humidity: 45, cloudCover: 35),
+            hour: 12
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("④ 흐림") {        // cloudy — 그레이블루+라이트블루+아이스
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 18, weatherCode: 3, windSpeed: 10, humidity: 65, cloudCover: 80),
-        hour: 14
-    )
+#Preview("④ 흐림") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 18, weatherCode: 3, windSpeed: 10, humidity: 65, cloudCover: 80),
+            hour: 14
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑤ 안개") {        // fog — 거의 화이트, 연한 블루 블롭
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 14, weatherCode: 45, windSpeed: 3, humidity: 95, cloudCover: 90),
-        hour: 9
-    )
+#Preview("⑤ 안개") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 14, weatherCode: 45, windSpeed: 3, humidity: 95, cloudCover: 90),
+            hour: 9
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑥ 이슬비") {      // drizzle — 라이트블루+소프트블루+아이스
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 15, weatherCode: 53, windSpeed: 8, humidity: 80, cloudCover: 85),
-        hour: 11
-    )
+#Preview("⑥ 이슬비") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 15, weatherCode: 53, windSpeed: 8, humidity: 80, cloudCover: 85),
+            hour: 11
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑦ 비") {          // rain — 소프트블루+그레이블루
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 16, weatherCode: 63, windSpeed: 22, humidity: 88, cloudCover: 90),
-        hour: 15
-    )
+#Preview("⑦ 비") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 16, weatherCode: 63, windSpeed: 22, humidity: 88, cloudCover: 90),
+            hour: 15
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑧ 천둥번개") {    // thunderstorm — 바이올렛+네이비+딥네이비, 가장 빠름
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 18, weatherCode: 95, windSpeed: 42, humidity: 92, cloudCover: 95),
-        hour: 16
-    )
+#Preview("⑧ 천둥번개") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 18, weatherCode: 95, windSpeed: 42, humidity: 92, cloudCover: 95),
+            hour: 16
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑨ 눈") {          // snow — 아이스+라이트블루+프로스트화이트
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: -2, weatherCode: 73, windSpeed: 10, humidity: 75, cloudCover: 88),
-        hour: 10
-    )
+#Preview("⑨ 눈") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: -2, weatherCode: 73, windSpeed: 10, humidity: 75, cloudCover: 88),
+            hour: 10
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(Color.rBlackWarm)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
-#Preview("⑩ 맑은 밤") {     // clear-night — 딥네이비+네이비+골드문 포인트
-    Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 4, humidity: 55, cloudCover: 5),
-        hour: 23
-    )
+#Preview("⑩ 맑은 밤") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 4, humidity: 55, cloudCover: 5),
+            hour: 23
+        )
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
 }
