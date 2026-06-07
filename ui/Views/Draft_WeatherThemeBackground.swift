@@ -56,11 +56,23 @@ struct Draft_WeatherThemeBackground: View {
         return WeatherThemeLibrary.baseTheme(wmoCode: wmo, hour: hour).id
     }
 
+    private var visualParams: WeatherVisualParams {
+        WeatherThemeLibrary.computeParams(
+            wmoCode:     weather?.weatherCode  ?? 0,
+            temperature: weather?.temperature  ?? 18,
+            humidity:    Double(weather?.humidity   ?? 50),
+            windSpeed:   (weather?.windSpeed   ?? 10) / 3.6,
+            cloudCover:  Double(weather?.cloudCover ?? 20),
+            hour:        hour,
+            launchSeed:  launchSeed
+        )
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 if #available(iOS 18.0, *) {
-                    DraftMeshBackground(themeId: themeId, size: geo.size)
+                    DraftMeshBackground(themeId: themeId, size: geo.size, params: visualParams)
                 } else {
                     DraftBlobBackground(weather: weather, hour: hour,
                                         launchSeed: launchSeed, size: geo.size)
@@ -78,28 +90,36 @@ struct Draft_WeatherThemeBackground: View {
 private struct DraftMeshBackground: View {
     let themeId: String
     let size:    CGSize
+    let params:  WeatherVisualParams
 
     @State private var q1 = false
     @State private var q2 = false
     @State private var q3 = false
     @State private var r1 = false
     @State private var r2 = false
+    @State private var e1 = false
     @State private var colorPhase = false
 
     private var palette: DraftPalette { DraftPalette.palette(for: themeId) }
 
+    // 바람 세기 → 애니메이션 속도 (animationDuration 크면 느림)
+    private var spd: Double { max(0.55, min(1.6, params.animationDuration / 10.0)) }
+    // 습도 → 블러 (더 습할수록 약간 더 뭉개짐)
+    private var meshBlur: CGFloat { CGFloat(36 + params.blurRadius * 0.4) }
+
     private var meshPoints: [SIMD2<Float>] {
-        let cx1: Float = q1 ? 0.62 : 0.38
-        let cx2: Float = q2 ? 0.32 : 0.68
-        let cx3: Float = q3 ? 0.58 : 0.42
-        let dy1: Float = r1 ?  0.03 : -0.03
-        let dy2: Float = r2 ? -0.04 :  0.04
+        let cx1: Float = q1 ? 0.78 : 0.22
+        let cx2: Float = q2 ? 0.18 : 0.82
+        let cx3: Float = q3 ? 0.72 : 0.28
+        let dy1: Float = r1 ?  0.16 : -0.16
+        let dy2: Float = r2 ? -0.18 :  0.18
+        let ey:  Float = e1 ?  0.10 : -0.10
         return [
-            [0.0, 0.00], [0.50, 0.00],        [1.0, 0.00],
-            [0.0, 0.25], [cx1,  0.25 + dy1],  [1.0, 0.25],
-            [0.0, 0.50], [cx2,  0.50 + dy2],  [1.0, 0.50],
-            [0.0, 0.75], [cx3,  0.75 + dy1],  [1.0, 0.75],
-            [0.0, 1.00], [0.50, 1.00],         [1.0, 1.00],
+            [0.0, 0.00],         [0.50, 0.00],         [1.0, 0.00],
+            [0.0, 0.25 + ey],    [cx1,  0.25 + dy1],   [1.0, 0.25 - ey],
+            [0.0, 0.50 - ey],    [cx2,  0.50 + dy2],   [1.0, 0.50 + ey],
+            [0.0, 0.75 + ey],    [cx3,  0.75 + dy1],   [1.0, 0.75 - ey],
+            [0.0, 1.00],         [0.50, 1.00],          [1.0, 1.00],
         ]
     }
 
@@ -110,17 +130,24 @@ private struct DraftMeshBackground: View {
             colors: colorPhase ? palette.meshColorsB : palette.meshColorsA,
             smoothsColors: true
         )
+        .scaleEffect(1.3)
+        .blur(radius: meshBlur)                             // 습도 반영
+        .saturation(params.saturationScale)                 // 흐림·비 → 채도 낮춤
+        .brightness(params.brightnessScale - 1.0)           // 구름량 → 밝기 조절
+        .hueRotation(.degrees(params.hueOffset * 0.25))     // 기온 → 미세 색조 이동
         .ignoresSafeArea()
         .onAppear { startAnimations() }
     }
 
     private func startAnimations() {
-        withAnimation(.easeInOut(duration:  9.0).repeatForever(autoreverses: true))               { q1 = true }
-        withAnimation(.easeInOut(duration: 13.0).repeatForever(autoreverses: true).delay(1.5))   { q2 = true }
-        withAnimation(.easeInOut(duration: 11.0).repeatForever(autoreverses: true).delay(0.7))   { q3 = true }
-        withAnimation(.easeInOut(duration:  7.0).repeatForever(autoreverses: true).delay(2.0))   { r1 = true }
-        withAnimation(.easeInOut(duration: 10.0).repeatForever(autoreverses: true).delay(0.4))   { r2 = true }
-        withAnimation(.easeInOut(duration: 20.0).repeatForever(autoreverses: true).delay(4.0))   { colorPhase = true }
+        let s = spd   // 바람 세기에 따른 속도 배율
+        withAnimation(.easeInOut(duration:  5.0 * s).repeatForever(autoreverses: true))              { q1 = true }
+        withAnimation(.easeInOut(duration:  8.5 * s).repeatForever(autoreverses: true).delay(0.8))   { q2 = true }
+        withAnimation(.easeInOut(duration:  6.5 * s).repeatForever(autoreverses: true).delay(1.6))   { q3 = true }
+        withAnimation(.easeInOut(duration:  4.0 * s).repeatForever(autoreverses: true).delay(0.4))   { r1 = true }
+        withAnimation(.easeInOut(duration:  6.0 * s).repeatForever(autoreverses: true).delay(1.2))   { r2 = true }
+        withAnimation(.easeInOut(duration:  7.0 * s).repeatForever(autoreverses: true).delay(0.2))   { e1 = true }
+        withAnimation(.easeInOut(duration:  9.0 * s).repeatForever(autoreverses: true).delay(2.0))   { colorPhase = true }
     }
 }
 
@@ -291,100 +318,99 @@ private struct DraftPalette {
 
         switch themeId {
 
-        // 새벽 — 웜로즈(상단) ↔ 코랄(상단) 대각 반전
-        // A: 로즈가 상단-좌, 코랄이 하단-우 / B: 반전
+        // 새벽 — 로즈(상단우) + 골드(중심) + 피치(하단좌) 삼각 배치
+        // A→B: 각 블롭이 시계방향으로 위치 교체 → 회전하는 것처럼 보임
         case "sunrise":
             return DraftPalette(
                 meshColorsA: [
-                    ro,   cr,   pc,
-                    cr,   pc,   ro,
-                    pc,   co,   cr,
-                    co,   cr,   ro,
-                    pc,   co,   ro,
+                    yL,   ro,   ro,   // 상단우: 로즈 블롭
+                    cr,   ro,   yM,
+                    cr,   yM,   yM,   // 중심: 골드 블롭
+                    pc,   pc,   cr,
+                    pc,   pc,   cr,   // 하단좌: 피치 블롭
                 ],
                 meshColorsB: [
-                    pc,   cr,   ro,
-                    ro,   co,   cr,
-                    co,   cr,   pc,
-                    cr,   ro,   co,
-                    ro,   pc,   co,
+                    yM,   yM,   yL,   // 상단좌: 골드 블롭
+                    yM,   pc,   cr,
+                    cr,   pc,   pc,   // 중심우: 피치 블롭
+                    ro,   cr,   ro,
+                    ro,   cr,   cr,   // 하단좌: 로즈 블롭
                 ]
             )
 
-        // 맑은 낮 — 라임옐로우(상단-좌) ↔ 골든앰버(상단-좌) 대각 반전
-        // 애니메이션: 라임→골드 블롭이 대각으로 이동
+        // 맑은 낮 — 골드(상단좌) + 로즈(우) + 피치(하단)
         case "clear-day":
             return DraftPalette(
                 meshColorsA: [
-                    yM,   cr,   am,
-                    cr,   yL,   yM,
-                    yL,   yM,   yD,
-                    yM,   yD,   cr,
-                    yD,   am,   yM,
+                    yM,   yM,   cr,   // 상단좌: 골드 블롭
+                    yM,   cr,   ro,
+                    cr,   cr,   ro,   // 우: 로즈 블롭
+                    am,   pc,   cr,
+                    pc,   pc,   cr,   // 하단: 피치 블롭
                 ],
                 meshColorsB: [
-                    am,   cr,   yM,
-                    yM,   yL,   cr,
-                    yD,   yM,   yL,
-                    cr,   yL,   yD,
-                    yM,   yD,   am,
+                    cr,   ro,   ro,   // 상단우: 로즈 블롭
+                    cr,   yM,   cr,
+                    yM,   yM,   cr,   // 좌: 골드 블롭
+                    cr,   cr,   pc,
+                    am,   cr,   pc,   // 하단우: 피치 블롭
                 ]
             )
 
-        // 구름 조금 — 앰버크림(상단) ↔ 피치(상단) 반전
+        // 구름 조금 — 로즈(상) + 앰버(중) + 피치(하) 수직 배치
         case "partly-cloudy":
             return DraftPalette(
                 meshColorsA: [
-                    am,   yL,   pc,
-                    yL,   yM,   am,
-                    am,   cr,   yM,
-                    pc,   am,   yL,
-                    yL,   pc,   am,
+                    cr,   ro,   ro,   // 상단: 로즈 블롭
+                    cr,   ro,   cr,
+                    am,   am,   cr,   // 중심: 앰버 블롭
+                    cr,   pc,   cr,
+                    pc,   pc,   cr,   // 하단: 피치 블롭
                 ],
                 meshColorsB: [
-                    pc,   yL,   am,
-                    am,   yM,   yL,
-                    yM,   cr,   am,
-                    am,   yL,   pc,
-                    am,   yM,   pc,
+                    ro,   ro,   cr,   // 상단좌: 로즈 (반대편)
+                    cr,   am,   cr,
+                    cr,   am,   am,   // 중심우: 앰버
+                    cr,   cr,   pc,
+                    cr,   pc,   pc,   // 하단우: 피치
                 ]
             )
 
-        // 흐림 — 크림+피치+앰버 (차분, 애니메이션은 피치 블롭 이동)
+        // 흐림 — 피치(상좌) + 앰버(중) + 코랄(하우) 차분 삼각
         case "cloudy", "overcast":
             return DraftPalette(
                 meshColorsA: [
-                    cr,   am,   pc,
-                    am,   yL,   cr,
-                    pc,   cr,   am,
-                    cr,   pc,   yL,
-                    am,   cr,   am,
+                    pc,   pc,   cr,
+                    pc,   cr,   cr,
+                    cr,   am,   cr,
+                    cr,   cr,   co,
+                    cr,   co,   co,
                 ],
                 meshColorsB: [
-                    pc,   cr,   am,
-                    cr,   pc,   am,
-                    am,   yL,   cr,
-                    pc,   am,   cr,
-                    cr,   am,   pc,
+                    cr,   cr,   pc,
+                    cr,   pc,   cr,
+                    cr,   cr,   am,
+                    co,   cr,   cr,
+                    co,   co,   cr,
                 ]
             )
 
-        // 비 — 코랄+앰버+크림 (웜 빗빛, 코랄 블롭 이동)
+        // 비 — 코랄(상) + 피치(중) + 앰버(하) 차분 삼각
         case "rain", "drizzle", "showers":
             return DraftPalette(
                 meshColorsA: [
-                    co,   am,   cr,
-                    am,   pc,   co,
-                    cr,   co,   am,
-                    co,   cr,   pc,
-                    am,   co,   cr,
+                    cr,   co,   co,
+                    cr,   co,   cr,
+                    cr,   pc,   cr,
+                    am,   cr,   cr,
+                    am,   am,   cr,
                 ],
                 meshColorsB: [
-                    cr,   am,   co,
-                    co,   cr,   am,
-                    am,   pc,   cr,
-                    cr,   co,   am,
-                    co,   cr,   am,
+                    co,   co,   cr,
+                    cr,   cr,   co,
+                    cr,   am,   cr,
+                    cr,   pc,   cr,
+                    cr,   cr,   pc,
                 ]
             )
 
@@ -423,6 +449,25 @@ private struct DraftPalette {
                     dc("5C3010"),  yM,            dc("6C3C14"),
                     yD,            dc("180C04"),  yM,
                     yM,            dc("200E04"),  yM,
+                ]
+            )
+
+        // 안개·이슬비 — 거의 크림, 아주 연한 피치·앰버 블롭 (시야 좁은 느낌)
+        case "hazy", "mist", "fog", "drizzle":
+            return DraftPalette(
+                meshColorsA: [
+                    cr,   am,   cr,
+                    am,   cr,   pc,
+                    cr,   pc,   cr,
+                    pc,   cr,   am,
+                    cr,   cr,   pc,
+                ],
+                meshColorsB: [
+                    cr,   pc,   cr,
+                    cr,   am,   cr,
+                    pc,   cr,   am,
+                    cr,   pc,   cr,
+                    am,   cr,   cr,
                 ]
             )
 
@@ -467,29 +512,71 @@ private struct DraftPalette {
     }
 }
 
-// MARK: - Preview
+// MARK: - Preview (10가지 날씨 조건)
+// 날씨 변수 매핑:
+//   animationDuration ← wind  (바람 셀수록 빠름)
+//   blurRadius        ← humidity (습할수록 블러↑)
+//   saturationScale   ← cloudCover (구름 많을수록 채도↓)
+//   brightnessScale   ← cloudCover (구름 많을수록 밝기↓)
+//   hueOffset         ← temperature (기온 높을수록 warm 쪽 미세 이동)
 
-#Preview("Sunrise") {
+#Preview("① 새벽 맑음") {   // sunrise — ro+yM+pc, 조용한 속도
     Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 18, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 10),
+        weather: WeatherData(temperature: 16, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 5),
         hour: 6
     )
 }
-#Preview("Clear Day") {
+#Preview("② 맑은 낮") {     // clear-day — yM+ro+pc, 밝고 빠름
     Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 24, weatherCode: 0, windSpeed: 8, humidity: 35, cloudCover: 5),
+        weather: WeatherData(temperature: 26, weatherCode: 0, windSpeed: 10, humidity: 30, cloudCover: 5),
         hour: 13
     )
 }
-#Preview("Rain") {
+#Preview("③ 구름 조금") {   // partly-cloudy — ro+am+pc
     Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 16, weatherCode: 61, windSpeed: 20, humidity: 85, cloudCover: 90),
+        weather: WeatherData(temperature: 22, weatherCode: 2, windSpeed: 12, humidity: 45, cloudCover: 35),
+        hour: 12
+    )
+}
+#Preview("④ 흐림") {        // cloudy — pc+am+co, 채도·밝기 살짝 낮춤
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: 18, weatherCode: 3, windSpeed: 10, humidity: 65, cloudCover: 80),
+        hour: 14
+    )
+}
+#Preview("⑤ 안개") {        // hazy — cr+am+pc, 블러 최대, 매우 연함
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: 14, weatherCode: 45, windSpeed: 3, humidity: 95, cloudCover: 90),
+        hour: 9
+    )
+}
+#Preview("⑥ 이슬비") {      // drizzle — cr+am+pc (안개와 같은 팔레트, 속도 차이)
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: 15, weatherCode: 53, windSpeed: 8, humidity: 80, cloudCover: 85),
+        hour: 11
+    )
+}
+#Preview("⑦ 비") {          // rain — co+pc+am, 코랄 블롭 이동
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: 16, weatherCode: 63, windSpeed: 22, humidity: 88, cloudCover: 90),
         hour: 15
     )
 }
-#Preview("Night") {
+#Preview("⑧ 천둥번개") {    // thunderstorm — 딥 웜브라운+골드, 가장 빠름
     Draft_WeatherThemeBackground(
-        weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 3, humidity: 50, cloudCover: 5),
+        weather: WeatherData(temperature: 18, weatherCode: 95, windSpeed: 42, humidity: 92, cloudCover: 95),
+        hour: 16
+    )
+}
+#Preview("⑨ 눈") {          // snow — cr+yL+ro, 조용한 속도
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: -2, weatherCode: 73, windSpeed: 10, humidity: 75, cloudCover: 88),
+        hour: 10
+    )
+}
+#Preview("⑩ 맑은 밤") {     // clear-night — 딥 웜브라운+골드 포인트
+    Draft_WeatherThemeBackground(
+        weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 4, humidity: 55, cloudCover: 5),
         hour: 23
     )
 }
