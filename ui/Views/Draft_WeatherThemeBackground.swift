@@ -354,47 +354,20 @@ private struct DraftPalette {
 private struct DraftTimeText: View {
     var dark: Bool = false
 
-    @State private var phase   = false
     @State private var wobbleY: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            // 오로라 글로우 블롭 — 텍스트 뒤에서 색을 투영
-            Ellipse()
-                .fill(
-                    AngularGradient(
-                        colors: [
-                            Color(red: 1.00, green: 0.60, blue: 0.75),
-                            Color(red: 1.00, green: 0.88, blue: 0.40),
-                            Color(red: 0.50, green: 0.90, blue: 0.72),
-                            Color(red: 0.60, green: 0.72, blue: 1.00),
-                            Color(red: 1.00, green: 0.60, blue: 0.75),
-                        ],
-                        center: .center,
-                        angle: phase ? .degrees(60) : .degrees(0)
-                    )
-                )
-                .frame(width: 340, height: 100)
-                .blur(radius: 32)
-                .opacity(0.72)
-
-            Text("00:00")
-                .font(.radioCanadaBig(110))
-                .foregroundStyle(dark ? Color.white : Color.rBlackWarm)
-                .opacity(0.65)
-                .blendMode(.overlay)
-                .offset(y: wobbleY)
-        }
-        .onAppear {
-            // 오로라 글로우 회전
-            withAnimation(.linear(duration: 6).repeatForever(autoreverses: true)) {
-                phase = true
+        Text("00:00")
+            .font(.radioCanadaBig(110))
+            .foregroundStyle(dark ? Color.white : Color.rBlackWarm)
+            .opacity(0.65)
+            .blendMode(.overlay)
+            .offset(y: wobbleY)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                    wobbleY = 3.5
+                }
             }
-            // 배경 블롭 움직임에 맞춘 느린 플로팅 (4초, ±3.5pt)
-            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                wobbleY = 3.5
-            }
-        }
     }
 }
 
