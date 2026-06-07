@@ -1,3 +1,4 @@
+
 import SwiftUI
 import Combine
 
@@ -23,6 +24,9 @@ struct HomeView: View {
                     weather: weather.current,
                     hour: Calendar.current.component(.hour, from: now)
                 )
+
+                // 임시 배경 orb — 날씨 매핑 전 테스트용
+                AnimatedOrbsBackground()
 
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
@@ -78,30 +82,15 @@ struct HomeView: View {
                         }
 
                         HStack(alignment: .center) {
-                            ZStack {
-                                Text(timeString)
-                                    .font(.radioCanadaBig(110))
-                                    .fontWeight(.black)
-                                    .foregroundStyle(Color.white)
-                                    .blur(radius: 16)
-                                    .opacity(0.35)
-                                    .blendMode(.screen)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.6)
-                                Text(timeString)
-                                    .font(.radioCanadaBig(110))
-                                    .fontWeight(.black)
-                                    .foregroundStyle(Color.white.opacity(0.30))
-                                    .blendMode(.screen)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.6)
-                            }
-                            .offset(x: wobble, y: floatY)
-                            .onAppear {
-                                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                                    floatY = 3.5
+                            // 시안 A: GlassTimeTextA(timeString: timeString)
+                            // 시안 B: GlassTimeTextB(timeString: timeString)
+                            GlassTimeTextA(timeString: timeString)
+                                .offset(x: wobble, y: floatY)
+                                .onAppear {
+                                    withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                                        floatY = 3.5
+                                    }
                                 }
-                            }
                             Spacer()
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
