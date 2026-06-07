@@ -332,7 +332,8 @@ struct HomeView: View {
         let cloudStr = weather.current.map { "cloud:\($0.cloudCover)%" } ?? "cloud:--"
         let lat = String(format: "%.2f", settings.latitude)
         let lon = String(format: "%.2f", settings.longitude)
-        return "일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))"
+        let errStr = weather.lastError.map { "ERR:\($0)" } ?? ""
+        return "일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))  \(errStr)"
     }
 
     private var timeString: String {
