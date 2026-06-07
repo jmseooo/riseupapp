@@ -91,13 +91,28 @@ private struct AnimatedBlob: View {
     private var turbDirY: CGFloat { (index % 3 == 0) ?  1 : -1 }
 
     private var durationX: Double {
-        params.animationDuration * (1.0 + Double(index % 5 - 2) * 0.09)
+        guard params.turbulence > 0.7 else {
+            return params.animationDuration * (1.0 + Double(index % 5 - 2) * 0.09)
+        }
+        // 서로소 비율 — 블롭들이 동기화되지 않아 패턴이 반복되지 않음
+        let m: [Double] = [0.71, 1.00, 1.41, 1.90, 2.53]
+        return params.animationDuration * m[index % m.count]
     }
     private var durationY: Double {
-        params.animationDuration * (1.0 + Double(index % 7 - 3) * 0.13)
+        guard params.turbulence > 0.7 else {
+            return params.animationDuration * (1.0 + Double(index % 7 - 3) * 0.13)
+        }
+        // X와 다른 배수 세트 — 각 블롭이 독립적인 타원 경로
+        let m: [Double] = [1.13, 1.60, 0.83, 2.17, 1.37]
+        return params.animationDuration * m[index % m.count]
     }
     private var turbDuration: Double {
-        max(1.2, params.animationDuration * 0.20 + Double(index % 4) * 0.35)
+        guard params.turbulence > 0.7 else {
+            return max(1.2, params.animationDuration * 0.20 + Double(index % 4) * 0.35)
+        }
+        // 주 drift보다 빠른 단주기 지터 — X/Y와도 비동기
+        let m: [Double] = [0.41, 0.67, 0.53, 0.89, 0.61]
+        return params.animationDuration * m[index % m.count]
     }
 
     // Pulse — oscillates between 55% and 100% of base opacity

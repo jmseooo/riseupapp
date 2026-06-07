@@ -181,7 +181,7 @@ struct WeatherThemeLibrary {
             orb(size: 115, "B582CC", "8E5DAE"),
             orb(size:  95, "FFC596", "ECA876"),
             orb(size:  60, "7A5CB0", "5A4290"),
-        ], blur: 50, opacity: 0.65, dur: 1.8, turb: 0.9, pulse: true, count: 3...5),
+        ], blur: 44, opacity: 0.80, dur: 1.8, turb: 0.9, pulse: true, count: 3...5),
 
         // Pale, dreamy — slow float, many small blobs like falling flakes.
         "snow": makeTheme("snow", angle: 180, bg: "F4F8FB", "E5EEF4", orbs: [
@@ -389,7 +389,7 @@ struct WeatherThemeLibrary {
         launchSeed: Int
     ) -> WeatherVisualParams {
         let theme                       = baseTheme(wmoCode: wmoCode, hour: hour)
-        let (blurAdd, opacityMul)       = humidityModifiers(humidity)
+        let (blurAddRaw, opacityMul)    = humidityModifiers(humidity)
         let (durationDiv, displacement) = windModifiers(windSpeed)
         let (brightness, saturation)    = cloudCoverParams(cloudCover)
         let hue                         = temperatureHueOffset(temperature)
@@ -399,14 +399,20 @@ struct WeatherThemeLibrary {
             launchSeed: launchSeed
         )
 
+        // 어두운 테마(thunderstorm, clear-night 등)는 배경색 자체가 이미 흐린 날씨를 표현.
+        // cloudCover 채도·밝기 보정과 humidity blur 증가를 중복 적용하면 오브 색이 사라짐.
+        let blurAdd:    CGFloat = theme.isDark ? min(blurAddRaw, 6) : blurAddRaw
+        let satScale:   Double  = theme.isDark ? max(saturation,  0.90) : saturation
+        let brightScale: Double = theme.isDark ? max(brightness,  0.95) : brightness
+
         return WeatherVisualParams(
             theme:               theme,
             blurRadius:          theme.baseBlurRadius + blurAdd,
-            orbOpacity:          theme.baseOrbOpacity * opacityMul,
+            orbOpacity:          theme.baseOrbOpacity * (theme.isDark ? 1.0 : opacityMul),
             animationDuration:   theme.baseAnimDuration / durationDiv,
             displacementPercent: displacement,
-            brightnessScale:     brightness,
-            saturationScale:     saturation,
+            brightnessScale:     brightScale,
+            saturationScale:     satScale,
             hueOffset:           hue,
             turbulence:          theme.turbulence,
             pulseEnabled:        theme.pulseEnabled,
