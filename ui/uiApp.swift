@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import BackgroundTasks
 
 @main
@@ -24,5 +25,6 @@ struct uiApp: App {
                     BackgroundTaskManager.shared.scheduleNextRefresh()
                 }
         }
+        .modelContainer(for: TodoItem.self)
     }
 }

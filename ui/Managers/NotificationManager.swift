@@ -47,7 +47,7 @@ final class NotificationManager: NSObject {
         let content = UNMutableNotificationContent()
         content.title = "일어날 시간이에요 ☀️"
         content.body = "해가 떴습니다. 좋은 아침이에요!"
-        content.sound = .default
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("alarm_sound.caf"))
         content.categoryIdentifier = "SUNRISE_ALARM"
 
         let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: alarmDate)
@@ -117,7 +117,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let content = UNMutableNotificationContent()
         content.title = "일어날 시간이에요 ☀️"
         content.body = "5분이 지났어요. 일어나세요!"
-        content.sound = .default
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("alarm_sound.caf"))
         content.categoryIdentifier = "SUNRISE_ALARM"
 
         let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)

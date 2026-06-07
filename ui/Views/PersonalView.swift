@@ -1,14 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct PersonalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AlarmSettings.self) private var settings
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
 
-    @State private var todos: [TodoItem] = [
-        TodoItem(text: "캡스톤 디자인 PRD 검토"),
-        TodoItem(text: "러닝 30분"),
-        TodoItem(text: "쇼핑"),
-    ]
     @State private var showAddTodo = false
     @State private var newTodoText = ""
 
@@ -150,8 +148,8 @@ struct PersonalView: View {
             .padding(.horizontal, DS.hPad)
 
             VStack(spacing: 0) {
-                ForEach($todos) { $item in
-                    todoRow(item: $item)
+                ForEach(todos) { item in
+                    todoRow(item: item)
                 }
             }
             .padding(.horizontal, DS.hPad)
@@ -159,16 +157,16 @@ struct PersonalView: View {
         }
     }
 
-    private func todoRow(item: Binding<TodoItem>) -> some View {
+    private func todoRow(item: TodoItem) -> some View {
         HStack(spacing: 14) {
             Button {
-                item.wrappedValue.isDone.toggle()
+                item.isDone.toggle()
             } label: {
                 ZStack {
                     Circle()
                         .strokeBorder(Color.rTextWarm, lineWidth: 1)
                         .frame(width: 22, height: 22)
-                    if item.wrappedValue.isDone {
+                    if item.isDone {
                         Image(systemName: "checkmark")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(Color.rBlackWarm)
@@ -176,12 +174,12 @@ struct PersonalView: View {
                 }
             }
 
-            Text(item.wrappedValue.text)
+            Text(item.text)
                 .font(.pretendard(16, weight: .medium))
-                .foregroundStyle(item.wrappedValue.isDone
+                .foregroundStyle(item.isDone
                     ? Color.rTextSub
                     : Color.rBlackWarm)
-                .strikethrough(item.wrappedValue.isDone,
+                .strikethrough(item.isDone,
                                color: Color.rTextSub)
 
             Spacer()
@@ -214,7 +212,7 @@ struct PersonalView: View {
             Button {
                 let trimmed = newTodoText.trimmingCharacters(in: .whitespaces)
                 if !trimmed.isEmpty {
-                    todos.append(TodoItem(text: trimmed))
+                    modelContext.insert(TodoItem(text: trimmed))
                     newTodoText = ""
                 }
                 showAddTodo = false
@@ -272,14 +270,6 @@ struct PersonalView: View {
         f.dateFormat = "MMMM"
         return f.string(from: Date()).uppercased()
     }
-}
-
-// MARK: - Models
-
-struct TodoItem: Identifiable {
-    let id = UUID()
-    var text: String
-    var isDone = false
 }
 
 struct DayData: Identifiable {
@@ -359,4 +349,5 @@ struct SunriseSparkline: View {
 #Preview {
     PersonalView()
         .environment(AlarmSettings.shared)
+        .modelContainer(for: TodoItem.self, inMemory: true)
 }

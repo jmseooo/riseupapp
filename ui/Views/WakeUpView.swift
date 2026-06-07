@@ -1,14 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct WakeUpView: View {
     @Environment(AlarmSettings.self) private var settings
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
     var onWokeUp: () -> Void
 
-    @State private var todos: [TodoItem] = [
-        TodoItem(text: "캡스톤 디자인 PRD 검토"),
-        TodoItem(text: "러닝 30분"),
-        TodoItem(text: "쇼핑"),
-    ]
     @State private var showAddTodo = false
     @State private var newTodoText = ""
 
@@ -30,7 +28,10 @@ struct WakeUpView: View {
 
                 Spacer()
 
-                Button(action: onWokeUp) {
+                Button {
+                    AlarmAudioPlayer.shared.stop()
+                    onWokeUp()
+                } label: {
                     Text("I woke up")
                         .font(.pretendard(17, weight: .semibold))
                         .foregroundStyle(.white)
@@ -42,6 +43,12 @@ struct WakeUpView: View {
                 .padding(.horizontal, DS.hPad)
                 .padding(.bottom, 48)
             }
+        }
+        .onAppear {
+            AlarmAudioPlayer.shared.play()
+        }
+        .onDisappear {
+            AlarmAudioPlayer.shared.stop()
         }
         .sheet(isPresented: $showAddTodo) {
             addTodoSheet
@@ -93,8 +100,8 @@ struct WakeUpView: View {
             .padding(.horizontal, DS.hPad)
 
             VStack(spacing: 0) {
-                ForEach($todos) { $item in
-                    todoRow(item: $item)
+                ForEach(todos) { item in
+                    todoRow(item: item)
                 }
             }
             .padding(.horizontal, DS.hPad)
@@ -102,16 +109,16 @@ struct WakeUpView: View {
         }
     }
 
-    private func todoRow(item: Binding<TodoItem>) -> some View {
+    private func todoRow(item: TodoItem) -> some View {
         HStack(spacing: 14) {
             Button {
-                item.wrappedValue.isDone.toggle()
+                item.isDone.toggle()
             } label: {
                 ZStack {
                     Circle()
                         .strokeBorder(Color.rTextWarm, lineWidth: 1)
                         .frame(width: 22, height: 22)
-                    if item.wrappedValue.isDone {
+                    if item.isDone {
                         Image(systemName: "checkmark")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(Color.rBlackWarm)
@@ -119,10 +126,10 @@ struct WakeUpView: View {
                 }
             }
 
-            Text(item.wrappedValue.text)
+            Text(item.text)
                 .font(.pretendard(16, weight: .medium))
-                .foregroundStyle(item.wrappedValue.isDone ? Color.rTextSub : Color.rBlackWarm)
-                .strikethrough(item.wrappedValue.isDone, color: Color.rTextSub)
+                .foregroundStyle(item.isDone ? Color.rTextSub : Color.rBlackWarm)
+                .strikethrough(item.isDone, color: Color.rTextSub)
 
             Spacer()
         }
@@ -154,7 +161,7 @@ struct WakeUpView: View {
             Button {
                 let trimmed = newTodoText.trimmingCharacters(in: .whitespaces)
                 if !trimmed.isEmpty {
-                    todos.append(TodoItem(text: trimmed))
+                    modelContext.insert(TodoItem(text: trimmed))
                     newTodoText = ""
                 }
                 showAddTodo = false
@@ -180,4 +187,5 @@ struct WakeUpView: View {
 #Preview {
     WakeUpView { }
         .environment(AlarmSettings.shared)
+        .modelContainer(for: TodoItem.self, inMemory: true)
 }
