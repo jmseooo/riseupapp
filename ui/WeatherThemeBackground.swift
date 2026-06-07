@@ -62,15 +62,19 @@ private struct AnimatedBlob: View {
     let size:   CGSize
     let index:  Int
 
-    @State private var phaseX = false
-    @State private var phaseY = false
+    @State private var phaseX  = false
+    @State private var phaseY  = false
+    @State private var turbX   = false
+    @State private var turbY   = false
+    @State private var pulsed  = false
 
     private var blobSize: CGFloat {
         max(blob.sizePercent / 100 * size.width, 1)
     }
-    private var cx: CGFloat { blob.xPercent / 100 * size.width }
-    private var cy: CGFloat { blob.yPercent / 100 * size.height }
+    private var cx: CGFloat { blob.xPercent  / 100 * size.width  }
+    private var cy: CGFloat { blob.yPercent  / 100 * size.height }
 
+    // Primary drift — same elliptical path as before
     private var driftX: CGFloat {
         CGFloat(params.displacementPercent) / 100 * size.width
             * CGFloat(0.5 + 0.5 * cos(Double(index * 137) * .pi / 180))
@@ -80,12 +84,26 @@ private struct AnimatedBlob: View {
             * CGFloat(0.5 + 0.5 * sin(Double(index * 137) * .pi / 180))
     }
 
-    // X/Y 주기를 다르게 → 타원형으로 둥둥 떠다니는 효과
+    // Turbulence — fast secondary jitter, amplitude scales with turbulence value
+    private var turbAmpX: CGFloat { CGFloat(params.turbulence) * 0.08 * size.width  }
+    private var turbAmpY: CGFloat { CGFloat(params.turbulence) * 0.08 * size.height }
+    private var turbDirX: CGFloat { (index % 2 == 0) ?  1 : -1 }
+    private var turbDirY: CGFloat { (index % 3 == 0) ?  1 : -1 }
+
     private var durationX: Double {
         params.animationDuration * (1.0 + Double(index % 5 - 2) * 0.09)
     }
     private var durationY: Double {
         params.animationDuration * (1.0 + Double(index % 7 - 3) * 0.13)
+    }
+    private var turbDuration: Double {
+        max(1.2, params.animationDuration * 0.20 + Double(index % 4) * 0.35)
+    }
+
+    // Pulse — oscillates between 55% and 100% of base opacity
+    private var effectiveOpacity: Double {
+        guard params.pulseEnabled else { return params.orbOpacity }
+        return params.orbOpacity * (pulsed ? 1.0 : 0.55)
     }
 
     var body: some View {
@@ -93,8 +111,8 @@ private struct AnimatedBlob: View {
             .fill(
                 RadialGradient(
                     colors: [
-                        blob.startColor.opacity(params.orbOpacity),
-                        blob.endColor.opacity(params.orbOpacity * 0.3),
+                        blob.startColor.opacity(effectiveOpacity),
+                        blob.endColor.opacity(effectiveOpacity * 0.3),
                         .clear
                     ],
                     center:      .center,
@@ -108,25 +126,57 @@ private struct AnimatedBlob: View {
             .brightness(params.brightnessScale - 1.0)
             .saturation(params.saturationScale)
             .position(
-                x: cx + (phaseX ? driftX : -driftX),
-                y: cy + (phaseY ? driftY : -driftY)
+                x: cx
+                    + (phaseX ? driftX : -driftX)
+                    + (turbX  ? turbAmpX * turbDirX : 0),
+                y: cy
+                    + (phaseY ? driftY : -driftY)
+                    + (turbY  ? turbAmpY * turbDirY : 0)
             )
-            .onAppear {
-                let staggerX = Double(index % 5) * 0.25
-                let staggerY = Double(index % 7) * 0.2
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(staggerX))
-                    withAnimation(.easeInOut(duration: durationX).repeatForever(autoreverses: true)) {
-                        phaseX = true
-                    }
-                }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(staggerY))
-                    withAnimation(.easeInOut(duration: durationY).repeatForever(autoreverses: true)) {
-                        phaseY = true
-                    }
+            .onAppear { startAnimations() }
+    }
+
+    private func startAnimations() {
+        let sx = Double(index % 5) * 0.25
+        let sy = Double(index % 7) * 0.20
+        let st = Double(index % 3) * 0.15
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(sx))
+            withAnimation(.easeInOut(duration: durationX).repeatForever(autoreverses: true)) {
+                phaseX = true
+            }
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(sy))
+            withAnimation(.easeInOut(duration: durationY).repeatForever(autoreverses: true)) {
+                phaseY = true
+            }
+        }
+
+        if params.turbulence > 0.05 {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(st))
+                withAnimation(.easeInOut(duration: turbDuration).repeatForever(autoreverses: true)) {
+                    turbX = true
                 }
             }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(st + 0.12))
+                withAnimation(.easeInOut(duration: turbDuration * 1.35).repeatForever(autoreverses: true)) {
+                    turbY = true
+                }
+            }
+        }
+
+        if params.pulseEnabled {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(Double(index % 5) * 0.40))
+                withAnimation(.easeInOut(duration: 1.8 + Double(index % 3) * 0.55).repeatForever(autoreverses: true)) {
+                    pulsed = true
+                }
+            }
+        }
     }
 }
 
