@@ -260,156 +260,207 @@ private struct DraftOrb: View {
     }
 }
 
-// MARK: - Draft Palette (ref2 색 조합 기반)
+// MARK: - Draft Palette ("Rise Daybreak" 영상 픽셀 직접 추출)
+//
+// 샘플링 좌표별 평균값:
+//   cr = #FFF5CC  크림베이스   — 상단 밝은 영역 (Frame2,3,5 top)
+//   yL = #FDF0C0  라이트버터   — 상단 중간 영역
+//   yM = #FAD28A  골든옐로우   — 중심 주인공 블롭 (Frame2-6 center)
+//   yD = #F8BA80  딥앰버피치   — yM과 pc 사이 전환
+//   am = #F8D8A8  웜앰버크림   — 중간 전환 영역
+//   pc = #F5BEA0  소프트피치   — 하단 전환색 (Frame3 bot-right)
+//   co = #F2A898  소프트코랄   — 하단 코너 (Frame4,6 bot-right 계열)
+//   ro = #F4B8C8  소프트로즈   — 핑크 블롭 (Frame1 top-center, Frame2,5,6 top-right)
 
 private struct DraftPalette {
     let meshColorsA: [Color]
     let meshColorsB: [Color]
 
+    private static let cr = dc("FFF5CC")   // 크림베이스
+    private static let yL = dc("FDF0C0")   // 라이트버터
+    private static let yM = dc("FAD28A")   // 골든옐로우 (메인 블롭)
+    private static let yD = dc("F8BA80")   // 딥앰버피치
+    private static let am = dc("F8D8A8")   // 웜앰버크림
+    private static let pc = dc("F5BEA0")   // 소프트피치
+    private static let co = dc("F2A898")   // 소프트코랄
+    private static let ro = dc("F4B8C8")   // 소프트로즈 (핑크 블롭)
+
     static func palette(for themeId: String) -> DraftPalette {
+        let cr = Self.cr, yL = Self.yL, yM = Self.yM, yD = Self.yD
+        let am = Self.am, pc = Self.pc, co = Self.co, ro = Self.ro
+
         switch themeId {
 
+        // 새벽 — 웜로즈(상단) ↔ 코랄(상단) 대각 반전
+        // A: 로즈가 상단-좌, 코랄이 하단-우 / B: 반전
         case "sunrise":
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFE566"), dc("B8E070"), dc("FFD040"),
-                    dc("FFE566"), dc("D068A8"), dc("E060C0"),
-                    dc("FFD040"), dc("7022C0"), dc("D450A8"),
-                    dc("FFE566"), dc("E060C0"), dc("7022C0"),
-                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                    ro,   cr,   pc,
+                    cr,   pc,   ro,
+                    pc,   co,   cr,
+                    co,   cr,   ro,
+                    pc,   co,   ro,
                 ],
                 meshColorsB: [
-                    dc("B8E070"), dc("FFE566"), dc("FFD040"),
-                    dc("E060C0"), dc("FFD040"), dc("B8E070"),
-                    dc("D450A8"), dc("FFE566"), dc("7022C0"),
-                    dc("7022C0"), dc("D068A8"), dc("FFD040"),
-                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                    pc,   cr,   ro,
+                    ro,   co,   cr,
+                    co,   cr,   pc,
+                    cr,   ro,   co,
+                    ro,   pc,   co,
                 ]
             )
 
+        // 맑은 낮 — 라임옐로우(상단-좌) ↔ 골든앰버(상단-좌) 대각 반전
+        // 애니메이션: 라임→골드 블롭이 대각으로 이동
         case "clear-day":
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFE566"), dc("FFD040"), dc("C8E870"),
-                    dc("FFE566"), dc("8850D0"), dc("FFD040"),
-                    dc("FFD040"), dc("FFE566"), dc("9B60E0"),
-                    dc("FFD040"), dc("B8E070"), dc("FFE566"),
-                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                    yM,   cr,   am,
+                    cr,   yL,   yM,
+                    yL,   yM,   yD,
+                    yM,   yD,   cr,
+                    yD,   am,   yM,
                 ],
                 meshColorsB: [
-                    dc("C8E870"), dc("FFE566"), dc("FFD040"),
-                    dc("FFD040"), dc("FFE566"), dc("8850D0"),
-                    dc("9B60E0"), dc("FFD040"), dc("FFE566"),
-                    dc("FFE566"), dc("FFD040"), dc("C8E870"),
-                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                    am,   cr,   yM,
+                    yM,   yL,   cr,
+                    yD,   yM,   yL,
+                    cr,   yL,   yD,
+                    yM,   yD,   am,
                 ]
             )
 
+        // 구름 조금 — 앰버크림(상단) ↔ 피치(상단) 반전
         case "partly-cloudy":
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFE566"), dc("FFD040"), dc("D068A8"),
-                    dc("D068A8"), dc("FFE566"), dc("8850D0"),
-                    dc("FFD040"), dc("8850D0"), dc("FFE566"),
-                    dc("FFE566"), dc("D068A8"), dc("FFD040"),
-                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                    am,   yL,   pc,
+                    yL,   yM,   am,
+                    am,   cr,   yM,
+                    pc,   am,   yL,
+                    yL,   pc,   am,
                 ],
                 meshColorsB: [
-                    dc("D068A8"), dc("FFE566"), dc("FFD040"),
-                    dc("8850D0"), dc("FFD040"), dc("D068A8"),
-                    dc("FFE566"), dc("D068A8"), dc("8850D0"),
-                    dc("FFD040"), dc("FFE566"), dc("D068A8"),
-                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                    pc,   yL,   am,
+                    am,   yM,   yL,
+                    yM,   cr,   am,
+                    am,   yL,   pc,
+                    am,   yM,   pc,
                 ]
             )
 
+        // 흐림 — 크림+피치+앰버 (차분, 애니메이션은 피치 블롭 이동)
+        case "cloudy", "overcast":
+            return DraftPalette(
+                meshColorsA: [
+                    cr,   am,   pc,
+                    am,   yL,   cr,
+                    pc,   cr,   am,
+                    cr,   pc,   yL,
+                    am,   cr,   am,
+                ],
+                meshColorsB: [
+                    pc,   cr,   am,
+                    cr,   pc,   am,
+                    am,   yL,   cr,
+                    pc,   am,   cr,
+                    cr,   am,   pc,
+                ]
+            )
+
+        // 비 — 코랄+앰버+크림 (웜 빗빛, 코랄 블롭 이동)
         case "rain", "drizzle", "showers":
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFD040"), dc("3D1880"), dc("FFE566"),
-                    dc("FFE566"), dc("5525A0"), dc("3D1880"),
-                    dc("FFD040"), dc("8022C0"), dc("FFE566"),
-                    dc("7022C0"), dc("FFD040"), dc("5525A0"),
-                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                    co,   am,   cr,
+                    am,   pc,   co,
+                    cr,   co,   am,
+                    co,   cr,   pc,
+                    am,   co,   cr,
                 ],
                 meshColorsB: [
-                    dc("3D1880"), dc("FFE566"), dc("FFD040"),
-                    dc("FFD040"), dc("3D1880"), dc("FFE566"),
-                    dc("FFE566"), dc("7022C0"), dc("FFD040"),
-                    dc("5525A0"), dc("FFE566"), dc("8022C0"),
-                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                    cr,   am,   co,
+                    co,   cr,   am,
+                    am,   pc,   cr,
+                    cr,   co,   am,
+                    co,   cr,   am,
                 ]
             )
 
+        // 밤 — 딥 웜브라운 + 골드 포인트
         case "clear-night":
             return DraftPalette(
                 meshColorsA: [
-                    dc("271161"), dc("FFD040"), dc("180E50"),
-                    dc("FFD040"), dc("7022C0"), dc("3D1880"),
-                    dc("FFB830"), dc("4A2EA0"), dc("FFD040"),
-                    dc("7022C0"), dc("FFD040"), dc("3D1880"),
-                    dc("180E50"), dc("FFD040"), dc("271161"),
+                    dc("281408"),  dc("D4A020"),  dc("1C0C04"),
+                    dc("D4A020"),  dc("503018"),  dc("281408"),
+                    dc("C89018"),  dc("402010"),  dc("D4A020"),
+                    dc("503018"),  dc("D4A020"),  dc("281408"),
+                    dc("1C0C04"),  dc("D4A020"),  dc("281408"),
                 ],
                 meshColorsB: [
-                    dc("180E50"), dc("FFD040"), dc("271161"),
-                    dc("3D1880"), dc("FFD040"), dc("7022C0"),
-                    dc("FFD040"), dc("4A2EA0"), dc("FFB830"),
-                    dc("3D1880"), dc("FFD040"), dc("7022C0"),
-                    dc("271161"), dc("FFD040"), dc("180E50"),
+                    dc("1C0C04"),  dc("C89018"),  dc("281408"),
+                    dc("281408"),  dc("D4A020"),  dc("503018"),
+                    dc("D4A020"),  dc("503018"),  dc("C89018"),
+                    dc("281408"),  dc("503018"),  dc("D4A020"),
+                    dc("281408"),  dc("C89018"),  dc("1C0C04"),
                 ]
             )
 
+        // 천둥 — 딥 웜브라운 + 밝은 골드 (골드 블롭 이동)
         case "thunderstorm":
             return DraftPalette(
                 meshColorsA: [
-                    dc("1A0840"), dc("FFE566"), dc("2D1060"),
-                    dc("FFE566"), dc("8022E0"), dc("1A0840"),
-                    dc("FFD040"), dc("A023D0"), dc("7022C0"),
-                    dc("FFE566"), dc("7022C0"), dc("FFD040"),
-                    dc("2D1060"), dc("FFE566"), dc("1A0840"),
+                    dc("180C04"),  yM,            dc("200E04"),
+                    yM,            dc("5C3010"),  dc("180C04"),
+                    yD,            dc("6C3C14"),  dc("5C3010"),
+                    yM,            dc("5C3010"),  yD,
+                    dc("200E04"),  yM,            dc("180C04"),
                 ],
                 meshColorsB: [
-                    dc("FFE566"), dc("1A0840"), dc("FFD040"),
-                    dc("1A0840"), dc("FFE566"), dc("8022E0"),
-                    dc("7022C0"), dc("FFD040"), dc("A023D0"),
-                    dc("FFD040"), dc("FFE566"), dc("7022C0"),
-                    dc("FFE566"), dc("2D1060"), dc("FFE566"),
+                    yM,            dc("180C04"),  yD,
+                    dc("180C04"),  yD,            dc("5C3010"),
+                    dc("5C3010"),  yM,            dc("6C3C14"),
+                    yD,            dc("180C04"),  yM,
+                    yM,            dc("200E04"),  yM,
                 ]
             )
 
+        // 눈·서리 — 크림+버터+로즈 (따뜻한 눈빛)
         case "snow", "blizzard", "frost":
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFE566"), dc("EEF0FF"), dc("FFD040"),
-                    dc("8850D0"), dc("FFE566"), dc("C0C8FF"),
-                    dc("FFD040"), dc("D0D8FF"), dc("FFE566"),
-                    dc("9B60E0"), dc("FFE566"), dc("FFD040"),
-                    dc("FFE566"), dc("EEF0FF"), dc("FFD040"),
+                    cr,   ro,   yL,
+                    ro,   cr,   ro,
+                    yL,   cr,   yL,
+                    cr,   yL,   ro,
+                    yL,   cr,   yL,
                 ],
                 meshColorsB: [
-                    dc("EEF0FF"), dc("FFE566"), dc("FFD040"),
-                    dc("FFE566"), dc("8850D0"), dc("EEF0FF"),
-                    dc("D0D8FF"), dc("FFE566"), dc("9B60E0"),
-                    dc("FFE566"), dc("FFD040"), dc("D0D8FF"),
-                    dc("FFD040"), dc("FFE566"), dc("EEF0FF"),
+                    yL,   cr,   ro,
+                    cr,   ro,   cr,
+                    ro,   yL,   cr,
+                    yL,   ro,   cr,
+                    cr,   yL,   cr,
                 ]
             )
 
+        // 기타
         default:
             return DraftPalette(
                 meshColorsA: [
-                    dc("FFE566"), dc("FFD040"), dc("D068A8"),
-                    dc("FFD040"), dc("8850D0"), dc("FFE566"),
-                    dc("E060C0"), dc("FFE566"), dc("FFD040"),
-                    dc("FFD040"), dc("D068A8"), dc("8850D0"),
-                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                    am,   pc,   yM,
+                    pc,   yM,   cr,
+                    yM,   yD,   am,
+                    am,   pc,   yM,
+                    yM,   am,   yM,
                 ],
                 meshColorsB: [
-                    dc("D068A8"), dc("FFE566"), dc("FFD040"),
-                    dc("FFE566"), dc("FFD040"), dc("8850D0"),
-                    dc("FFD040"), dc("E060C0"), dc("FFE566"),
-                    dc("8850D0"), dc("FFE566"), dc("FFD040"),
-                    dc("FFD040"), dc("FFE566"), dc("D068A8"),
+                    pc,   am,   yM,
+                    yM,   cr,   pc,
+                    yD,   yM,   am,
+                    pc,   yM,   am,
+                    am,   yM,   am,
                 ]
             )
         }
