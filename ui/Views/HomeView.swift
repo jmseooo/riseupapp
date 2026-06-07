@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var isPinching: Bool = false
     @State private var isPinchExpanded: Bool = false
     @State private var wobble: CGFloat = 0
+    @State private var floatY: CGFloat = 0
     @State private var pinchDotCount: Int = 0
 
     var body: some View {
@@ -77,12 +78,30 @@ struct HomeView: View {
                         }
 
                         HStack(alignment: .center) {
-                            Text(timeString)
-                                .font(.radioCanadaBig(110))
-                                .foregroundStyle(Color.rBlackWarm)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                                .offset(x: wobble)
+                            ZStack {
+                                Text(timeString)
+                                    .font(.radioCanadaBig(110))
+                                    .fontWeight(.black)
+                                    .foregroundStyle(Color.white)
+                                    .blur(radius: 16)
+                                    .opacity(0.35)
+                                    .blendMode(.screen)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
+                                Text(timeString)
+                                    .font(.radioCanadaBig(110))
+                                    .fontWeight(.black)
+                                    .foregroundStyle(Color.white.opacity(0.30))
+                                    .blendMode(.screen)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
+                            }
+                            .offset(x: wobble, y: floatY)
+                            .onAppear {
+                                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                                    floatY = 3.5
+                                }
+                            }
                             Spacer()
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
