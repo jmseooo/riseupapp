@@ -347,13 +347,49 @@ private struct DraftPalette {
     }
 }
 
+// MARK: - Time Text with Aurora Glow
+// ref1: Der Augenblick Pinterest image — 텍스트 뒤 오로라 컬러 블롭
+// ref2: 오브 배경 영상 — 블러된 컬러가 UI에 투영되는 글로우
+
+private struct DraftTimeText: View {
+    var dark: Bool = false
+
+    @State private var phase = false
+
+    var body: some View {
+        ZStack {
+            // 오로라 글로우 블롭 — 텍스트 뒤에서 색을 투영
+            Ellipse()
+                .fill(
+                    AngularGradient(
+                        colors: [
+                            Color(red: 1.00, green: 0.60, blue: 0.75),  // 핑크
+                            Color(red: 1.00, green: 0.88, blue: 0.40),  // 옐로우
+                            Color(red: 0.50, green: 0.90, blue: 0.72),  // 민트
+                            Color(red: 0.60, green: 0.72, blue: 1.00),  // 라벤더
+                            Color(red: 1.00, green: 0.60, blue: 0.75),  // 핑크 (연결)
+                        ],
+                        center: .center,
+                        angle: phase ? .degrees(60) : .degrees(0)
+                    )
+                )
+                .frame(width: 340, height: 100)
+                .blur(radius: 32)
+                .opacity(0.72)
+
+            Text("00:00")
+                .font(.radioCanadaBig(110))
+                .foregroundStyle(dark ? .white.opacity(0.88) : Color.rBlackWarm)
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 6).repeatForever(autoreverses: true)) {
+                phase = true
+            }
+        }
+    }
+}
+
 // MARK: - Preview (10가지 날씨 조건)
-// 날씨 변수 매핑:
-//   animationDuration ← wind  (바람 셀수록 빠름)
-//   blurRadius        ← humidity (습할수록 블러↑)
-//   saturationScale   ← cloudCover (구름 많을수록 채도↓)
-//   brightnessScale   ← cloudCover (구름 많을수록 밝기↓)
-//   hueOffset         ← temperature (기온 높을수록 warm 쪽 미세 이동)
 
 #Preview("① 새벽 맑음") {
     ZStack(alignment: .bottomLeading) {
@@ -361,9 +397,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 16, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 5),
             hour: 6
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -374,9 +408,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 26, weatherCode: 0, windSpeed: 10, humidity: 30, cloudCover: 5),
             hour: 13
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -387,9 +419,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 22, weatherCode: 2, windSpeed: 12, humidity: 45, cloudCover: 35),
             hour: 12
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -400,9 +430,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 18, weatherCode: 3, windSpeed: 10, humidity: 65, cloudCover: 80),
             hour: 14
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -413,9 +441,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 14, weatherCode: 45, windSpeed: 3, humidity: 95, cloudCover: 90),
             hour: 9
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -426,9 +452,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 15, weatherCode: 53, windSpeed: 8, humidity: 80, cloudCover: 85),
             hour: 11
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -439,9 +463,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 16, weatherCode: 63, windSpeed: 22, humidity: 88, cloudCover: 90),
             hour: 15
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -452,9 +474,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 18, weatherCode: 95, windSpeed: 42, humidity: 92, cloudCover: 95),
             hour: 16
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(.white.opacity(0.85))
+        DraftTimeText(dark: true)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -465,9 +485,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: -2, weatherCode: 73, windSpeed: 10, humidity: 75, cloudCover: 88),
             hour: 10
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(Color.rBlackWarm)
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
@@ -478,9 +496,7 @@ private struct DraftPalette {
             weather: WeatherData(temperature: 12, weatherCode: 0, windSpeed: 4, humidity: 55, cloudCover: 5),
             hour: 23
         )
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .foregroundStyle(.white.opacity(0.85))
+        DraftTimeText(dark: true)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }
