@@ -102,7 +102,8 @@ struct HomeView: View {
                                     .foregroundStyle(Color.rBlackWarm)
                             }
                         }
-                        .gesture(
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(
                             MagnificationGesture(minimumScaleDelta: 0.01)
                                 .onChanged { _ in
                                     guard !isPinching else { return }
