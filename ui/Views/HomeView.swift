@@ -13,7 +13,6 @@ struct HomeView: View {
     @State private var isPinching: Bool = false
     @State private var isPinchExpanded: Bool = false
     @State private var wobble: CGFloat = 0
-    @State private var timeWobble: CGFloat = 0
     @State private var pinchDotCount: Int = 0
 
     var body: some View {
@@ -83,9 +82,7 @@ struct HomeView: View {
                                 .foregroundStyle(Color.rBlackWarm)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
-                                .opacity(0.65)
-                                .blendMode(.overlay)
-                                .offset(x: wobble, y: timeWobble)
+                                .offset(x: wobble)
                             Spacer()
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -128,11 +125,6 @@ struct HomeView: View {
                                     }
                                 }
                         )
-                        .onAppear {
-                            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                                timeWobble = 3.5
-                            }
-                        }
 
                     }
                     .padding(.horizontal, DS.hPad)
