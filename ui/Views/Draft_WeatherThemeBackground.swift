@@ -48,21 +48,38 @@ private let pointColors: [String: (Color, Color)] = [
 struct Draft_WeatherThemeBackground: View {
     let weather: WeatherData?
     let hour: Int
+    var themeIdOverride: String? = nil   // 프리뷰에서 palette 직접 지정할 때 사용
 
     @State private var launchSeed = UUID().hashValue
 
     private var themeId: String {
+        if let override = themeIdOverride { return override }
         let wmo = weather?.weatherCode ?? 0
         return WeatherThemeLibrary.baseTheme(wmoCode: wmo, hour: hour).id
     }
 
     private var visualParams: WeatherVisualParams {
-        WeatherThemeLibrary.computeParams(
-            wmoCode:     weather?.weatherCode  ?? 0,
-            temperature: weather?.temperature  ?? 18,
-            humidity:    Double(weather?.humidity   ?? 50),
-            windSpeed:   (weather?.windSpeed   ?? 10) / 3.6,
-            cloudCover:  Double(weather?.cloudCover ?? 20),
+        let temp  = weather?.temperature  ?? 18.0
+        let humid = Double(weather?.humidity   ?? 50)
+        let wind  = (weather?.windSpeed   ?? 10) / 3.6
+        let cloud = Double(weather?.cloudCover ?? 20)
+
+        if let override = themeIdOverride {
+            return WeatherThemeLibrary.computeParams(
+                themeId:     override,
+                temperature: temp,
+                humidity:    humid,
+                windSpeed:   wind,
+                cloudCover:  cloud,
+                launchSeed:  launchSeed
+            )
+        }
+        return WeatherThemeLibrary.computeParams(
+            wmoCode:     weather?.weatherCode ?? 0,
+            temperature: temp,
+            humidity:    humid,
+            windSpeed:   wind,
+            cloudCover:  cloud,
             hour:        hour,
             launchSeed:  launchSeed
         )
@@ -313,8 +330,12 @@ private struct DraftPalette {
     static func palette(for themeId: String) -> DraftPalette {
         switch themeId {
         // ── 웜톤 ────────────────────────────────────────────────
-        case "sunrise":       return mk("FEF0C0", "F8AA50", "F06840", "F8C880")
-        case "clear-day":     return mk("FFF8E0", "FCE488", "F8D474", "F8C498")
+        // 새벽: 해 뜨기 전 어스름한 블루-라벤더. 채도 낮고 차분함.
+        case "sunrise":       return mk("D8E2F0", "7888C8", "9C80CC", "D0AAAA")
+        // 구 새벽 (웜): 기존 오렌지-코랄 톤. 비교용.
+        case "sunrise-warm":  return mk("FEF0C0", "F8AA50", "F06840", "F8C880")
+        // 맑은 낮: 선명한 골든 옐로우 + 스카이블루. 새벽보다 뚜렷하게 채도 높음.
+        case "clear-day":     return mk("FFF8E0", "FFD040", "68C4F8", "FFB440")
         case "hazy":          return mk("FEF0DC", "FBD8B4", "F8C894", "FCE4CC")
         case "smoke":         return mk("E2D6C4", "C4B49C", "B4A28C", "D6C8B4")
         case "heat":          return mk("FEE4A0", "FC9050", "F86044", "E84030")
@@ -491,6 +512,18 @@ private struct DraftTimeText: View {
             hour: 23
         )
         DraftTimeText(dark: true)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 160)
+    }
+}
+#Preview("⑪ 구 새벽 맑음 (웜)") {
+    ZStack(alignment: .bottomLeading) {
+        Draft_WeatherThemeBackground(
+            weather: WeatherData(temperature: 16, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 5),
+            hour: 6,
+            themeIdOverride: "sunrise-warm"
+        )
+        DraftTimeText(dark: false)
             .padding(.horizontal, 24)
             .padding(.bottom, 160)
     }

@@ -117,19 +117,27 @@ struct WeatherThemeLibrary {
 
         // ── Atmosphere ─────────────────────────────────────────────────────
 
-        // Warm golden bloom — isSunrise overrides all. Slow, almost no turbulence.
-        "sunrise": makeTheme("sunrise", angle: 180, bg: "F8F1E8", "FCEFE0", orbs: [
+        // 새벽: 해 뜨기 전 어스름한 블루-라벤더. 채도 낮고 차분한 pre-dawn 느낌.
+        "sunrise": makeTheme("sunrise", angle: 200, bg: "D8E2F0", "C4D0E8", orbs: [
+            orb(size: 155, "7888C8", "5C70B8"),
+            orb(size: 100, "9C80CC", "7C64BC"),
+            orb(size:  70, "D0AAAA", "B89090"),
+        ], blur: 38, opacity: 0.48, dur: 28, turb: 0.0, count: 3...5),
+
+        // 구 새벽 (웜): 기존 오렌지-코랄 톤. 비교·실험용.
+        "sunrise-warm": makeTheme("sunrise-warm", angle: 180, bg: "F8F1E8", "FCEFE0", orbs: [
             orb(size: 160, "FF9582", "F89383"),
             orb(size: 105, "FFB893", "FA9F7A"),
             orb(size:  65, "FFE2A0", "FFCE78"),
-        ], blur: 35, opacity: 0.50, dur: 26, turb: 0.0, count: 3...5),
+        ], blur: 35, opacity: 0.50, dur: 28, turb: 0.0, count: 3...5),
 
-        // Airy, light — barely drifts. Clear sky energy.
-        "clear-day": makeTheme("clear-day", angle: 200, bg: "FCF7E8", "F8EFD0", orbs: [
-            orb(size: 155, "FFE56A", "F9CF40"),
-            orb(size:  95, "FFE49E", "FBCE6E"),
-            orb(size:  60, "F8EAB8", "ECD482"),
-        ], blur: 25, opacity: 0.40, dur: 28, turb: 0.0, count: 4...6),
+        // 맑은 낮: 선명한 골든 옐로우 + 스카이블루. 새벽보다 뚜렷하게 채도 높음.
+        "clear-day": makeTheme("clear-day", angle: 180, bg: "FFF8E0", "FFF0C0", orbs: [
+            orb(size: 155, "FFD040", "F0B820"),
+            orb(size:  90, "68C4F8", "48A8F0"),
+            orb(size:  65, "FFB840", "F09820"),
+            orb(size:  50, "FFE888", "F8D040"),
+        ], blur: 22, opacity: 0.55, dur: 25, turb: 0.0, count: 4...7),
 
         // Warm/cool contrast — slightly faster, subtle turbulence.
         "partly-cloudy": makeTheme("partly-cloudy", angle: 165, bg: "F2F5F9", "E8EDF4", orbs: [
@@ -379,6 +387,26 @@ struct WeatherThemeLibrary {
 
     // MARK: - Compute All Visual Params
 
+    // themeId를 직접 지정할 때 사용 (Draft 비교 프리뷰 등)
+    static func computeParams(
+        themeId: String,
+        temperature: Double,
+        humidity: Double,
+        windSpeed: Double,
+        cloudCover: Double,
+        launchSeed: Int
+    ) -> WeatherVisualParams {
+        let theme = allThemes[themeId] ?? allThemes["clear-day"]!
+        return computeParams(
+            theme:       theme,
+            temperature: temperature,
+            humidity:    humidity,
+            windSpeed:   windSpeed,
+            cloudCover:  cloudCover,
+            launchSeed:  launchSeed
+        )
+    }
+
     static func computeParams(
         wmoCode: Int,
         temperature: Double,
@@ -388,7 +416,25 @@ struct WeatherThemeLibrary {
         hour: Int,
         launchSeed: Int
     ) -> WeatherVisualParams {
-        let theme                       = baseTheme(wmoCode: wmoCode, hour: hour)
+        let theme = baseTheme(wmoCode: wmoCode, hour: hour)
+        return computeParams(
+            theme:       theme,
+            temperature: temperature,
+            humidity:    humidity,
+            windSpeed:   windSpeed,
+            cloudCover:  cloudCover,
+            launchSeed:  launchSeed
+        )
+    }
+
+    private static func computeParams(
+        theme: WeatherBaseTheme,
+        temperature: Double,
+        humidity: Double,
+        windSpeed: Double,
+        cloudCover: Double,
+        launchSeed: Int
+    ) -> WeatherVisualParams {
         let (blurAddRaw, opacityMul)    = humidityModifiers(humidity)
         let (durationDiv, displacement) = windModifiers(windSpeed)
         let (brightness, saturation)    = cloudCoverParams(cloudCover)
