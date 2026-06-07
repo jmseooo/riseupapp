@@ -289,60 +289,34 @@ private struct DraftOrb: View {
 
 // MARK: - Draft Palette (20가지 날씨 × 3블롭 삼각 배치)
 //
-// 웜톤: 새벽·맑음·구름조금·폭염·연무·먼지  →  Rise Daybreak 원색 (cr/yL/yM/am/pc/co/ro)
-// 쿨톤: 흐림·안개·이슬비·비·눈·바람         →  블루-화이트 계열 (fw/lb/sb/gb/ic)
-// 다크: 천둥·맑은밤                          →  네이비-바이올렛 계열 (dn/nv/mv)
-// 특수: 폭염·연무·먼지·연기·바람            →  hz/sm/hw/ht/wt/ar
+// Frame 919.png 레퍼런스 스워치 색상 직접 반영
+// themeId → 스워치 매핑:
+//   sunrise/clear-day/hazy/heat          → 웜톤
+//   partly-cloudy/cloudy/overcast/mist   → 그레이-쿨
+//   drizzle/rain/snow/blizzard/frost     → 블루-아이스
+//   thunderstorm/clear-night             → 다크 네이비
+//   smoke/windy/sandstorm/showers/dust   → 특수
 
 private struct DraftPalette {
     let meshColorsA: [Color]
     let meshColorsB: [Color]
 
-    // ── 웜톤 (Rise Daybreak 원색)
-    private static let cr = dc("FFF5CC")   // 크림베이스
-    private static let yL = dc("FDF0C0")   // 라이트버터
-    private static let yM = dc("FAD28A")   // 골든옐로우
-    private static let am = dc("F8D8A8")   // 웜앰버크림
-    private static let pc = dc("F5BEA0")   // 소프트피치
-    private static let co = dc("F2A898")   // 소프트코랄
-    private static let ro = dc("F4B8C8")   // 소프트로즈
-
-    // ── 쿨톤 (비·구름·눈)
-    private static let fw = dc("EEF5FC")   // 프로스트화이트
-    private static let lb = dc("C4DCF0")   // 라이트블루
-    private static let sb = dc("A0C0E4")   // 소프트블루
-    private static let gb = dc("B0C4D8")   // 그레이블루
-    private static let ic = dc("D4ECF8")   // 아이스블루
-
-    // ── 다크톤 (천둥·밤)
-    private static let dn = dc("1C2248")   // 딥네이비
-    private static let nv = dc("2C3464")   // 네이비
-    private static let mv = dc("48507C")   // 미드바이올렛
-
-    // ── 특수 조건
-    private static let hz = dc("E0D0BC")   // 웜헤이즈 (연무·스모그)
-    private static let sm = dc("C8BAA0")   // 스모크탠 (연기·먼지)
-    private static let hw = dc("F09060")   // 히트웨이브오렌지
-    private static let ht = dc("E85840")   // 핫레드 (폭염)
-    private static let wt = dc("B4D8D0")   // 윈드틸 (바람 후 상쾌)
-    private static let ar = dc("C4E8DC")   // 애프터레인 (소나기 후)
-
     // A:b1(상단우)/b2(중심)/b3(하단좌)  →  B:b2(상단우)/b3(중심)/b1(하단좌) — 시계방향 회전
     private static func tri(_ bg: Color, _ b1: Color, _ b2: Color, _ b3: Color) -> DraftPalette {
         DraftPalette(
             meshColorsA: [
-                bg,  b1,  b1,
-                bg,  b1,  b2,
-                b2,  b2,  bg,
-                b3,  b3,  bg,
-                b3,  bg,  bg,
+                bg, b1, b1,
+                bg, b1, b2,
+                b2, b2, bg,
+                b3, b3, bg,
+                b3, bg, bg,
             ],
             meshColorsB: [
-                bg,  b2,  b2,
-                bg,  b2,  b3,
-                b3,  b3,  bg,
-                b1,  b1,  bg,
-                b1,  bg,  bg,
+                bg, b2, b2,
+                bg, b2, b3,
+                b3, b3, bg,
+                b1, b1, bg,
+                b1, bg, bg,
             ]
         )
     }
@@ -350,86 +324,118 @@ private struct DraftPalette {
     static func palette(for themeId: String) -> DraftPalette {
         switch themeId {
 
-        // ── 웜톤 계열 ──────────────────────────────────────────
+        // 1. Sunrise — 골든오렌지+살몬 웜 그라디언트
         case "sunrise":
-            return tri(yL, ro, yM, pc)        // 로즈+골드+피치
+            return tri(dc("FEF0C0"), dc("F8AA50"), dc("F06840"), dc("F8C880"))
 
+        // 2. Clear Day — 버터옐로우+소프트골드 파스텔
         case "clear-day":
-            return tri(cr, yM, ro, am)        // 골드+로즈+앰버
+            return tri(dc("FFF8E0"), dc("FCE488"), dc("F8D474"), dc("F8C498"))
 
+        // 3. Partly Cloudy — 라이트 블루-그레이 (매우 연함)
         case "partly-cloudy":
-            return tri(cr, ro, am, lb)        // 로즈+앰버+살짝쿨
+            return tri(dc("EEF3FA"), dc("CCDAEE"), dc("B8CBDF"), dc("DDE9F5"))
 
-        case "heat":
-            return tri(cr, hw, ht, yM)        // 오렌지+핫레드+골드
-
-        case "hazy":
-            return tri(cr, hz, am, yL)        // 헤이즈+앰버+버터
-
-        case "dust", "sandstorm":
-            return tri(am, sm, hz, co)        // 스모크+헤이즈+코랄
-
-        // ── 쿨톤 계열 ──────────────────────────────────────────
+        // 4. Cloudy — 블루-그레이 (파틀리보다 채도 조금 높음)
         case "cloudy":
-            return tri(fw, gb, lb, ic)        // 그레이블루+라이트블루+아이스
+            return tri(dc("E4EDF6"), dc("BECEDE"), dc("AABECE"), dc("CDDAEB"))
 
+        // 5. Overcast — 거의 흰색, 워밍 그레이
         case "overcast":
-            return tri(fw, gb, sb, gb)        // 더 진한 그레이블루
+            return tri(dc("F0EEEC"), dc("DCDCD6"), dc("CACAD0"), dc("E8E6E4"))
 
-        case "fog", "mist":
-            return tri(fw, lb, fw, ic)        // 거의 흰색, 연한 블루
-
-        case "drizzle":
-            return tri(fw, lb, sb, ic)        // 라이트블루+소프트블루+아이스
-
+        // 6. Rain — 뚜렷한 미드블루
         case "rain":
-            return tri(lb, sb, gb, lb)        // 소프트블루+그레이블루
+            return tri(dc("CCDFF0"), dc("7EAACF"), dc("5688C0"), dc("8EB2D8"))
 
-        case "showers":
-            return tri(lb, sb, lb, gb)        // 소나기 (rain보다 밝음)
+        // 7. Drizzle — 라이트블루 (레인보다 훨씬 연함)
+        case "drizzle":
+            return tri(dc("ECF3FC"), dc("C4D8F0"), dc("ACCCEA"), dc("DAECFA"))
 
-        case "snow":
-            return tri(fw, ic, lb, fw)        // 아이스+라이트블루+화이트
-
-        case "blizzard":
-            return tri(fw, fw, ic, lb)        // 더 순백 눈보라
-
-        case "frost":
-            return tri(fw, ic, lb, cr)        // 서리 (따뜻한 크림 터치)
-
-        case "hail":
-            return tri(lb, gb, ic, lb)        // 우박 (블루-그레이)
-
-        case "windy":
-            return tri(fw, wt, ar, lb)        // 틸+애프터레인+라이트블루
-
-        case "smoke":
-            return tri(fw, sm, gb, hz)        // 연기 (쿨+웜 믹스)
-
-        // ── 다크톤 계열 ──────────────────────────────────────────
+        // 8. Thunderstorm — 딥 인디고-퍼플네이비
         case "thunderstorm":
-            return tri(dn, mv, nv, dn)        // 바이올렛+네이비+딥네이비
+            return tri(dc("24243E"), dc("36366C"), dc("3C3468"), dc("1C1C38"))
 
-        case "clear-night":
+        // 9. Snow — 아이스 화이트-블루
+        case "snow":
+            return tri(dc("F2F8FC"), dc("D4E8F8"), dc("BCD8F4"), dc("E4F4FC"))
+
+        // 10. Blizzard — 쿨 그레이-블루 (스노우보다 더 진함)
+        case "blizzard":
+            return tri(dc("E6EEF6"), dc("BECEDD"), dc("AABECE"), dc("D4E0EE"))
+
+        // 11. Hail(dust) — 라이트 쿨 블루-그레이
+        case "dust":
+            return tri(dc("E8EEF6"), dc("B8CCDE"), dc("A0BCCC"), dc("D0DCEA"))
+
+        // 12. Fog(mist) — 뉴트럴 거의 화이트
+        case "mist":
+            return tri(dc("F4F4F4"), dc("E0E0E0"), dc("D0D0D4"), dc("ECECEC"))
+
+        // 13. Haze — 웜 피치-크림 글로우
+        case "hazy":
+            return tri(dc("FEF0DC"), dc("FBD8B4"), dc("F8C894"), dc("FCE4CC"))
+
+        // 14. Smoke — 웜 탄-카키
+        case "smoke":
+            return tri(dc("E2D6C4"), dc("C4B49C"), dc("B4A28C"), dc("D6C8B4"))
+
+        // 15. Windy — 라이트 세이지-민트
+        case "windy":
+            return tri(dc("ECF8F4"), dc("BCDACC"), dc("A4CCBC"), dc("D4EEE8"))
+
+        // 16. Tornado Watch(sandstorm) — 다크 올리브-그레이
+        case "sandstorm":
+            return tri(dc("766E66"), dc("5A5448"), dc("4E4840"), dc("847C74"))
+
+        // 17. Heatwave — 브라이트 오렌지→레드 그라디언트
+        case "heat":
             return DraftPalette(
                 meshColorsA: [
-                    dn,            nv,            nv,
-                    dn,            nv,            dc("C8A020"),
-                    dc("C8A020"),  mv,            dn,
-                    mv,            dn,            nv,
-                    dn,            nv,            dn,
+                    dc("FEE4A0"), dc("FC9050"), dc("FC9050"),
+                    dc("FEE4A0"), dc("FC9050"), dc("F86044"),
+                    dc("F86044"), dc("F86044"), dc("FEE4A0"),
+                    dc("E84030"), dc("E84030"), dc("FEE4A0"),
+                    dc("E84030"), dc("FEE4A0"), dc("FEE4A0"),
                 ],
                 meshColorsB: [
-                    dn,            dc("C8A020"),  nv,
-                    nv,            mv,            dn,
-                    dn,            nv,            mv,
-                    nv,            dn,            dc("C8A020"),
-                    nv,            dn,            dn,
+                    dc("FEE4A0"), dc("F86044"), dc("F86044"),
+                    dc("FEE4A0"), dc("F86044"), dc("E84030"),
+                    dc("E84030"), dc("E84030"), dc("FEE4A0"),
+                    dc("FC9050"), dc("FC9050"), dc("FEE4A0"),
+                    dc("FC9050"), dc("FEE4A0"), dc("FEE4A0"),
                 ]
             )
 
+        // 18. Freezing(frost) — 아이시 페일 블루
+        case "frost":
+            return tri(dc("EEF6FC"), dc("C6E0F4"), dc("AECCEA"), dc("E0F0FA"))
+
+        // 19. Starry Night — 딥 네이비 + 골드 문 포인트
+        case "clear-night":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("1C2450"), dc("262E6C"), dc("262E6C"),
+                    dc("1C2450"), dc("262E6C"), dc("C8A020"),
+                    dc("C8A020"), dc("2E3878"), dc("1C2450"),
+                    dc("2E3878"), dc("1C2450"), dc("262E6C"),
+                    dc("1C2450"), dc("262E6C"), dc("1C2450"),
+                ],
+                meshColorsB: [
+                    dc("1C2450"), dc("C8A020"), dc("262E6C"),
+                    dc("262E6C"), dc("2E3878"), dc("1C2450"),
+                    dc("1C2450"), dc("262E6C"), dc("2E3878"),
+                    dc("262E6C"), dc("1C2450"), dc("C8A020"),
+                    dc("262E6C"), dc("1C2450"), dc("1C2450"),
+                ]
+            )
+
+        // 20. After Rain(showers) — 라이트 민트-그린
+        case "showers":
+            return tri(dc("EEF8F4"), dc("BCE6D8"), dc("9ED4C4"), dc("DAEFE8"))
+
         default:
-            return tri(cr, yM, am, pc)
+            return tri(dc("FFF8E0"), dc("FCE488"), dc("F8D474"), dc("F8C498"))
         }
     }
 }
