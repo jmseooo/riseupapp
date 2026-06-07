@@ -15,38 +15,31 @@ private func dc(_ hex: String) -> Color {
     )
 }
 
-// MARK: - 테마별 포인트 컬러 (blob 4개 중 1개에만 적용)
-// 기존 warm/yellow 계열을 유지하면서 조화로운 악센트 하나를 섞음
+// MARK: - 항상 노출되는 웜 옐로우 액센트 (모든 테마에서 yellow base 유지)
+
+private let warmYellow = (start: dc("FFE059"), end: dc("FFC026"))
+
+// MARK: - 테마별 포인트 컬러
 
 private let pointColors: [String: (Color, Color)] = [
-    // 새벽 — 소프트로즈 (따뜻한 새벽빛)
     "sunrise":       (dc("F0C8C0"), dc("D8A8A0")),
-    // 맑은 낮 — 연피치 (따뜻한 햇살)
     "clear-day":     (dc("F0D0B8"), dc("D8B098")),
-    // 구름 조금 — 웜베이지 (햇빛 사이 구름)
     "partly-cloudy": (dc("F0D8C8"), dc("D8B8A8")),
     "cloudy":        (dc("E8D0C0"), dc("D0B0A0")),
     "overcast":      (dc("E0C8C0"), dc("C8A8A0")),
-    // 비 — 쿨라벤더 (빗속 보라빛, 차갑지만 무겁지 않게)
     "rain":          (dc("D0C8E0"), dc("B0A8C8")),
     "showers":       (dc("C8C0D8"), dc("A8A0C0")),
     "drizzle":       (dc("D0C8D8"), dc("B0A8C0")),
-    // 눈 — 아이시핑크 (눈 속의 따뜻한 기운)
     "snow":          (dc("F0D8E0"), dc("D8B8C8")),
     "blizzard":      (dc("E8D0D8"), dc("D0B0C0")),
     "frost":         (dc("E0D0D8"), dc("C8B0C0")),
-    // 밤 — 딥로즈 (밤하늘의 붉은 기운)
     "clear-night":   (dc("C8A0B0"), dc("A88090")),
-    // 천둥 — 전기옐로우 (번개빛)
     "thunderstorm":  (dc("F0E8A0"), dc("D8D080")),
-    // 연무·황사 — 웜샌드 (탁한 하늘)
     "hazy":          (dc("F0D8B8"), dc("D8B898")),
     "mist":          (dc("E8D8C8"), dc("D0B8A8")),
     "dust":          (dc("E8D0B0"), dc("D0B090")),
     "sandstorm":     (dc("E0C8A8"), dc("C8A888")),
-    // 바람 — 연민트 (신선한 바람)
     "windy":         (dc("C8E8D8"), dc("A8D0B8")),
-    // 열파 — 핫코랄 (뜨거운 열기)
     "heat":          (dc("F0A898"), dc("D88878")),
 ]
 
@@ -57,6 +50,87 @@ struct Draft_WeatherThemeBackground: View {
     let hour: Int
 
     @State private var launchSeed = UUID().hashValue
+
+    private var themeId: String {
+        let wmo = weather?.weatherCode ?? 0
+        return WeatherThemeLibrary.baseTheme(wmoCode: wmo, hour: hour).id
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                if #available(iOS 18.0, *) {
+                    DraftMeshBackground(themeId: themeId, size: geo.size)
+                } else {
+                    DraftBlobBackground(weather: weather, hour: hour,
+                                        launchSeed: launchSeed, size: geo.size)
+                }
+            }
+            .clipped()
+        }
+        .ignoresSafeArea()
+    }
+}
+
+// MARK: - Mesh Background (iOS 18+)
+
+@available(iOS 18.0, *)
+private struct DraftMeshBackground: View {
+    let themeId: String
+    let size:    CGSize
+
+    @State private var q1 = false
+    @State private var q2 = false
+    @State private var q3 = false
+    @State private var r1 = false
+    @State private var r2 = false
+    @State private var colorPhase = false
+
+    private var palette: DraftPalette { DraftPalette.palette(for: themeId) }
+
+    private var meshPoints: [SIMD2<Float>] {
+        let cx1: Float = q1 ? 0.62 : 0.38
+        let cx2: Float = q2 ? 0.32 : 0.68
+        let cx3: Float = q3 ? 0.58 : 0.42
+        let dy1: Float = r1 ?  0.03 : -0.03
+        let dy2: Float = r2 ? -0.04 :  0.04
+        return [
+            [0.0, 0.00], [0.50, 0.00],        [1.0, 0.00],
+            [0.0, 0.25], [cx1,  0.25 + dy1],  [1.0, 0.25],
+            [0.0, 0.50], [cx2,  0.50 + dy2],  [1.0, 0.50],
+            [0.0, 0.75], [cx3,  0.75 + dy1],  [1.0, 0.75],
+            [0.0, 1.00], [0.50, 1.00],         [1.0, 1.00],
+        ]
+    }
+
+    var body: some View {
+        MeshGradient(
+            width: 3, height: 5,
+            points: meshPoints,
+            colors: colorPhase ? palette.meshColorsB : palette.meshColorsA,
+            smoothsColors: true
+        )
+        .ignoresSafeArea()
+        .onAppear { startAnimations() }
+    }
+
+    private func startAnimations() {
+        withAnimation(.easeInOut(duration:  9.0).repeatForever(autoreverses: true))               { q1 = true }
+        withAnimation(.easeInOut(duration: 13.0).repeatForever(autoreverses: true).delay(1.5))   { q2 = true }
+        withAnimation(.easeInOut(duration: 11.0).repeatForever(autoreverses: true).delay(0.7))   { q3 = true }
+        withAnimation(.easeInOut(duration:  7.0).repeatForever(autoreverses: true).delay(2.0))   { r1 = true }
+        withAnimation(.easeInOut(duration: 10.0).repeatForever(autoreverses: true).delay(0.4))   { r2 = true }
+        withAnimation(.easeInOut(duration: 20.0).repeatForever(autoreverses: true).delay(4.0))   { colorPhase = true }
+    }
+}
+
+// MARK: - Blob Fallback (iOS 17)
+
+private struct DraftBlobBackground: View {
+    let weather:    WeatherData?
+    let hour:       Int
+    let launchSeed: Int
+    let size:       CGSize
 
     private var params: WeatherVisualParams {
         let wmo   = weather?.weatherCode  ?? 0
@@ -71,174 +145,273 @@ struct Draft_WeatherThemeBackground: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                backgroundGradient
-                ForEach(0..<params.blobs.count, id: \.self) { i in
-                    DraftAnimatedBlob(
-                        blob:   params.blobs[i],
-                        params: params,
-                        size:   geo.size,
-                        index:  i
-                    )
-                }
-            }
-            .clipped()
-        }
-        .ignoresSafeArea()
-    }
+        ZStack {
+            let rad = (params.theme.backgroundAngle + params.gradientAngleOffset) * .pi / 180
+            LinearGradient(
+                colors: [params.theme.backgroundStart, params.theme.backgroundEnd],
+                startPoint: UnitPoint(x: 0.5 - sin(rad) / 2, y: 0.5 - cos(rad) / 2),
+                endPoint:   UnitPoint(x: 0.5 + sin(rad) / 2, y: 0.5 + cos(rad) / 2)
+            )
+            .ignoresSafeArea()
 
-    private var backgroundGradient: some View {
-        let rad = (params.theme.backgroundAngle + params.gradientAngleOffset) * .pi / 180
-        return LinearGradient(
-            colors: [params.theme.backgroundStart, params.theme.backgroundEnd],
-            startPoint: UnitPoint(x: 0.5 - sin(rad) / 2, y: 0.5 - cos(rad) / 2),
-            endPoint:   UnitPoint(x: 0.5 + sin(rad) / 2, y: 0.5 + cos(rad) / 2)
-        )
-        .ignoresSafeArea()
+            ForEach(0..<params.blobs.count, id: \.self) { i in
+                DraftOrb(blob: params.blobs[i], params: params,
+                         size: size, index: i, blobCount: params.blobs.count)
+            }
+        }
     }
 }
 
-// MARK: - DraftAnimatedBlob
+// MARK: - DraftOrb (3-layer 유기적 움직임)
 
-private struct DraftAnimatedBlob: View {
-    let blob:   BlobParams
-    let params: WeatherVisualParams
-    let size:   CGSize
-    let index:  Int
+private struct DraftOrb: View {
+    let blob:      BlobParams
+    let params:    WeatherVisualParams
+    let size:      CGSize
+    let index:     Int
+    let blobCount: Int
 
-    @State private var phaseX = false
-    @State private var phaseY = false
-    @State private var breathScale:     CGFloat = 1.0
-    @State private var dissolveScale:   CGFloat = 1.0
-    @State private var dissolveOpacity: Double  = 1.0
-    @State private var wanderX:         CGFloat = 0
-    @State private var wanderY:         CGFloat = 0
+    @State private var p1 = false
+    @State private var p2 = false
+    @State private var p3 = false
+    @State private var breathIn   = false
+    @State private var aspectFlip = false
 
-    private var blobSize: CGFloat { max(blob.sizePercent / 100 * size.width * 1.5, 1) }
-    private var cx: CGFloat { blob.xPercent  / 100 * size.width  }
-    private var cy: CGFloat { blob.yPercent  / 100 * size.height }
+    private var cx: CGFloat { blob.xPercent / 100 * size.width  }
+    private var cy: CGFloat { blob.yPercent / 100 * size.height }
+    private var baseBlobSize: CGFloat { max(blob.sizePercent / 100 * max(size.width, size.height) * 2.2, 1) }
+    private var breathScale:  CGFloat { breathIn   ? 1.12 : 0.90 }
+    private var aspectFactor: CGFloat { aspectFlip ? 1.25 : 0.80 }
 
-    // 이동은 보조 — 화면의 25% 범위 내 완만한 drift
-    private var driftX: CGFloat {
-        size.width  * 0.25 * CGFloat(0.6 + 0.4 * cos(Double(index * 137) * .pi / 180))
-    }
-    private var driftY: CGFloat {
-        size.height * 0.20 * CGFloat(0.6 + 0.4 * sin(Double(index * 137) * .pi / 180))
-    }
+    private var dispScale: CGFloat { CGFloat(params.displacementPercent / 80.0) }
+    private var a1x: CGFloat { size.width  * 0.130 * dispScale }
+    private var a1y: CGFloat { size.height * 0.100 * dispScale }
+    private var a2x: CGFloat { size.width  * 0.070 * dispScale }
+    private var a2y: CGFloat { size.height * 0.054 * dispScale }
+    private var a3x: CGFloat { size.width  * 0.038 * dispScale }
+    private var a3y: CGFloat { size.height * 0.028 * dispScale }
 
-    private var activeDur: Double { params.animationDuration }
-    private var durationX: Double { params.animationDuration * 1.1 * (1.0 + Double(index % 5 - 2) * 0.09) }
-    private var durationY: Double { params.animationDuration * 1.1 * (1.0 + Double(index % 7 - 3) * 0.13) }
+    private var baseT: Double { params.animationDuration * (1.6 + Double(index % 5) * 0.38) }
+    private var dur1:  Double { baseT }
+    private var dur2:  Double { baseT * 1.618 }
+    private var dur3:  Double { baseT * 0.5774 }
 
-    private var effectiveBlur: CGFloat { params.blurRadius * 1.4 }
+    private var xs1: CGFloat { (index     % 2 == 0) ?  1 : -1 }
+    private var ys1: CGFloat { (index     % 3 == 0) ?  1 : -1 }
+    private var xs2: CGFloat { (index / 2 % 2 == 0) ? -1 :  1 }
+    private var ys2: CGFloat { (index / 2 % 3 == 0) ? -1 :  1 }
+    private var xs3: CGFloat { (index / 3 % 2 == 0) ?  1 : -1 }
+    private var ys3: CGFloat { (index / 3 % 3 == 0) ? -1 :  1 }
 
-    private var isPointBlob: Bool { index % 4 == 3 }
-
-    private var orbColors: (start: Color, end: Color) {
-        if isPointBlob, let point = pointColors[params.theme.id] {
-            return point
-        }
+    private var isWarmAccent: Bool { index == blobCount - 1 }
+    private var orbColors: (Color, Color) {
+        if isWarmAccent { return (warmYellow.start, warmYellow.end) }
+        if index % 4 == 2, let pt = pointColors[params.theme.id] { return pt }
         return (blob.endColor, blob.startColor)
+    }
+    private var effectiveOpacity: Double {
+        isWarmAccent && params.theme.isDark ? params.orbOpacity * 0.55 : params.orbOpacity
     }
 
     var body: some View {
-        let colors = orbColors
+        let (cs, ce) = orbColors
         Ellipse()
-            .fill(
-                RadialGradient(
-                    colors: [
-                        colors.start.opacity(params.orbOpacity * dissolveOpacity),
-                        colors.end.opacity(params.orbOpacity * 0.2 * dissolveOpacity),
-                        .clear
-                    ],
-                    center:      .center,
-                    startRadius: 0,
-                    endRadius:   blobSize / 2
-                )
-            )
-            .frame(width: blobSize * dissolveScale, height: blobSize * dissolveScale)
-            .blur(radius: effectiveBlur + (dissolveScale - 1.0) * effectiveBlur * 1.5)
-            .hueRotation(.degrees(params.hueOffset))
+            .fill(RadialGradient(
+                colors: [cs.opacity(effectiveOpacity), ce.opacity(effectiveOpacity * 0.18), .clear],
+                center: .center, startRadius: 0, endRadius: baseBlobSize / 2
+            ))
+            .frame(width:  baseBlobSize * breathScale * aspectFactor,
+                   height: baseBlobSize * breathScale / aspectFactor)
+            .blur(radius: params.blurRadius * 0.55)
+            .saturation(params.saturationScale * 1.8)
             .brightness(params.brightnessScale - 1.0)
-            .saturation(params.saturationScale * 1.3)
-            .position(
-                x: cx + wanderX + (phaseX ? driftX : -driftX),
-                y: cy + wanderY + (phaseY ? driftY : -driftY)
-            )
+            .hueRotation(.degrees(params.hueOffset))
+            .position(x: cx, y: cy)
+            .offset(x: (p1 ? xs1 : -xs1) * a1x, y: (p1 ? ys1 : -ys1) * a1y)
+            .offset(x: (p2 ? xs2 : -xs2) * a2x, y: (p2 ? ys2 : -ys2) * a2y)
+            .offset(x: (p3 ? xs3 : -xs3) * a3x, y: (p3 ? ys3 : -ys3) * a3y)
             .onAppear {
-                // 이동: 모든 blob, 느리게 (보조)
-                startFloat()
-                // 퍼지며 흩어짐: 4개 주기 내에서 시차, 여러 blob 동시 활성화
-                let dissolveDelay = Double(index % 4) * 0.5
+                let d1 = Double(index % 5) * 0.35
+                let d2 = Double(index % 7) * 0.28
+                let d3 = Double(index % 3) * 0.52
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(dissolveDelay))
-                    await dissolveLoop()
+                    try? await Task.sleep(for: .seconds(d1))
+                    withAnimation(.easeInOut(duration: dur1).repeatForever(autoreverses: true)) { p1 = true }
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(d2))
+                    withAnimation(.easeInOut(duration: dur2).repeatForever(autoreverses: true)) { p2 = true }
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(d3))
+                    withAnimation(.easeInOut(duration: dur3).repeatForever(autoreverses: true)) { p3 = true }
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(Double(index % 4) * 0.6))
+                    withAnimation(.easeInOut(duration: 4.5 + Double(index % 5) * 0.8)
+                        .repeatForever(autoreverses: true)) { breathIn = true }
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(Double(index % 3) * 0.9))
+                    withAnimation(.easeInOut(duration: 3.8 + Double(index % 7) * 0.6)
+                        .repeatForever(autoreverses: true)) { aspectFlip = true }
                 }
             }
     }
+}
 
-    private func startFloat() {
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Double(index % 5) * 0.3))
-            withAnimation(.easeInOut(duration: durationX).repeatForever(autoreverses: true)) { phaseX = true }
-        }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Double(index % 7) * 0.25))
-            withAnimation(.easeInOut(duration: durationY).repeatForever(autoreverses: true)) { phaseY = true }
-        }
-    }
+// MARK: - Draft Palette (ref2 색 조합 기반)
 
-    // 3개 중 1개(index % 3 == 1)는 보이면서 천천히 이동하는 traveler
-    private var isTraveler: Bool { index % 3 == 1 }
+private struct DraftPalette {
+    let meshColorsA: [Color]
+    let meshColorsB: [Color]
 
-    @MainActor
-    private func dissolveLoop() async {
-        var cycle = 0
-        while !Task.isCancelled {
-            // hold — 긴 시간 유지해 여러 blob이 동시에 보이도록
-            let holdDur = 3.0 + Double(index % 4) * 0.6
+    static func palette(for themeId: String) -> DraftPalette {
+        switch themeId {
 
-            if isTraveler {
-                // 선명하게 보이는 동안 다른 위치로 유려하게 이동
-                let midAngle = Double(cycle * 89 + index * 71)
-                let midX = size.width  * 0.20 * cos(midAngle * .pi / 180)
-                let midY = size.height * 0.16 * sin(midAngle * .pi / 180)
-                withAnimation(.easeInOut(duration: holdDur)) {
-                    wanderX = midX
-                    wanderY = midY
-                }
-            }
-            try? await Task.sleep(for: .seconds(holdDur))
+        case "sunrise":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFE566"), dc("B8E070"), dc("FFD040"),
+                    dc("FFE566"), dc("D068A8"), dc("E060C0"),
+                    dc("FFD040"), dc("7022C0"), dc("D450A8"),
+                    dc("FFE566"), dc("E060C0"), dc("7022C0"),
+                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                ],
+                meshColorsB: [
+                    dc("B8E070"), dc("FFE566"), dc("FFD040"),
+                    dc("E060C0"), dc("FFD040"), dc("B8E070"),
+                    dc("D450A8"), dc("FFE566"), dc("7022C0"),
+                    dc("7022C0"), dc("D068A8"), dc("FFD040"),
+                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                ]
+            )
 
-            // 다음 등장 위치 — 사이클·인덱스 조합으로 화면 전체에 분산
-            let angle = Double(cycle * 137 + index * 53)
-            let nextWX = size.width  * 0.22 * cos(angle * .pi / 180)
-            let nextWY = size.height * 0.18 * sin(angle * .pi / 180)
+        case "clear-day":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFE566"), dc("FFD040"), dc("C8E870"),
+                    dc("FFE566"), dc("8850D0"), dc("FFD040"),
+                    dc("FFD040"), dc("FFE566"), dc("9B60E0"),
+                    dc("FFD040"), dc("B8E070"), dc("FFE566"),
+                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                ],
+                meshColorsB: [
+                    dc("C8E870"), dc("FFE566"), dc("FFD040"),
+                    dc("FFD040"), dc("FFE566"), dc("8850D0"),
+                    dc("9B60E0"), dc("FFD040"), dc("FFE566"),
+                    dc("FFE566"), dc("FFD040"), dc("C8E870"),
+                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                ]
+            )
 
-            // spread — 짧게, 금방 사라지고 새 위치로 이동
-            let spreadDur = 1.2 + Double(index % 3) * 0.25
-            withAnimation(.easeInOut(duration: spreadDur)) {
-                dissolveScale   = 2.8
-                dissolveOpacity = 0.0
-                wanderX = nextWX
-                wanderY = nextWY
-            }
-            try? await Task.sleep(for: .seconds(spreadDur))
+        case "partly-cloudy":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFE566"), dc("FFD040"), dc("D068A8"),
+                    dc("D068A8"), dc("FFE566"), dc("8850D0"),
+                    dc("FFD040"), dc("8850D0"), dc("FFE566"),
+                    dc("FFE566"), dc("D068A8"), dc("FFD040"),
+                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                ],
+                meshColorsB: [
+                    dc("D068A8"), dc("FFE566"), dc("FFD040"),
+                    dc("8850D0"), dc("FFD040"), dc("D068A8"),
+                    dc("FFE566"), dc("D068A8"), dc("8850D0"),
+                    dc("FFD040"), dc("FFE566"), dc("D068A8"),
+                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                ]
+            )
 
-            // 씨앗 상태 리셋 — 새 위치에서, 불투명도 0이라 안 보임
-            dissolveScale   = 0.4
-            dissolveOpacity = 0.0
+        case "rain", "drizzle", "showers":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFD040"), dc("3D1880"), dc("FFE566"),
+                    dc("FFE566"), dc("5525A0"), dc("3D1880"),
+                    dc("FFD040"), dc("8022C0"), dc("FFE566"),
+                    dc("7022C0"), dc("FFD040"), dc("5525A0"),
+                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                ],
+                meshColorsB: [
+                    dc("3D1880"), dc("FFE566"), dc("FFD040"),
+                    dc("FFD040"), dc("3D1880"), dc("FFE566"),
+                    dc("FFE566"), dc("7022C0"), dc("FFD040"),
+                    dc("5525A0"), dc("FFE566"), dc("8022C0"),
+                    dc("FFD040"), dc("FFE566"), dc("FFD040"),
+                ]
+            )
 
-            // emerge — 짧게 솟아오름
-            let emergeDur = 0.7 + Double(index % 3) * 0.15
-            withAnimation(.easeOut(duration: emergeDur)) {
-                dissolveScale   = 1.0
-                dissolveOpacity = 1.0
-            }
-            try? await Task.sleep(for: .seconds(emergeDur))
+        case "clear-night":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("271161"), dc("FFD040"), dc("180E50"),
+                    dc("FFD040"), dc("7022C0"), dc("3D1880"),
+                    dc("FFB830"), dc("4A2EA0"), dc("FFD040"),
+                    dc("7022C0"), dc("FFD040"), dc("3D1880"),
+                    dc("180E50"), dc("FFD040"), dc("271161"),
+                ],
+                meshColorsB: [
+                    dc("180E50"), dc("FFD040"), dc("271161"),
+                    dc("3D1880"), dc("FFD040"), dc("7022C0"),
+                    dc("FFD040"), dc("4A2EA0"), dc("FFB830"),
+                    dc("3D1880"), dc("FFD040"), dc("7022C0"),
+                    dc("271161"), dc("FFD040"), dc("180E50"),
+                ]
+            )
 
-            cycle += 1
+        case "thunderstorm":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("1A0840"), dc("FFE566"), dc("2D1060"),
+                    dc("FFE566"), dc("8022E0"), dc("1A0840"),
+                    dc("FFD040"), dc("A023D0"), dc("7022C0"),
+                    dc("FFE566"), dc("7022C0"), dc("FFD040"),
+                    dc("2D1060"), dc("FFE566"), dc("1A0840"),
+                ],
+                meshColorsB: [
+                    dc("FFE566"), dc("1A0840"), dc("FFD040"),
+                    dc("1A0840"), dc("FFE566"), dc("8022E0"),
+                    dc("7022C0"), dc("FFD040"), dc("A023D0"),
+                    dc("FFD040"), dc("FFE566"), dc("7022C0"),
+                    dc("FFE566"), dc("2D1060"), dc("FFE566"),
+                ]
+            )
+
+        case "snow", "blizzard", "frost":
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFE566"), dc("EEF0FF"), dc("FFD040"),
+                    dc("8850D0"), dc("FFE566"), dc("C0C8FF"),
+                    dc("FFD040"), dc("D0D8FF"), dc("FFE566"),
+                    dc("9B60E0"), dc("FFE566"), dc("FFD040"),
+                    dc("FFE566"), dc("EEF0FF"), dc("FFD040"),
+                ],
+                meshColorsB: [
+                    dc("EEF0FF"), dc("FFE566"), dc("FFD040"),
+                    dc("FFE566"), dc("8850D0"), dc("EEF0FF"),
+                    dc("D0D8FF"), dc("FFE566"), dc("9B60E0"),
+                    dc("FFE566"), dc("FFD040"), dc("D0D8FF"),
+                    dc("FFD040"), dc("FFE566"), dc("EEF0FF"),
+                ]
+            )
+
+        default:
+            return DraftPalette(
+                meshColorsA: [
+                    dc("FFE566"), dc("FFD040"), dc("D068A8"),
+                    dc("FFD040"), dc("8850D0"), dc("FFE566"),
+                    dc("E060C0"), dc("FFE566"), dc("FFD040"),
+                    dc("FFD040"), dc("D068A8"), dc("8850D0"),
+                    dc("FFE566"), dc("FFD040"), dc("FFE566"),
+                ],
+                meshColorsB: [
+                    dc("D068A8"), dc("FFE566"), dc("FFD040"),
+                    dc("FFE566"), dc("FFD040"), dc("8850D0"),
+                    dc("FFD040"), dc("E060C0"), dc("FFE566"),
+                    dc("8850D0"), dc("FFE566"), dc("FFD040"),
+                    dc("FFD040"), dc("FFE566"), dc("D068A8"),
+                ]
+            )
         }
     }
 }
