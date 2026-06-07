@@ -7,19 +7,24 @@ struct WakeUpView: View {
     @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
     var onWokeUp: () -> Void
 
+    private let weather = WeatherService.shared
+    @State private var now = Date()
     @State private var showAddTodo = false
     @State private var newTodoText = ""
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            WeatherThemeBackground(
+                weather: weather.current,
+                hour: Calendar.current.component(.hour, from: now)
+            )
 
-            warmBlob
+            AnimatedOrbsBackground()
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("Good morning")
                     .font(.pretendard(34, weight: .semibold))
-                    .foregroundStyle(Color.rBlackWarm)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, DS.hPad)
                     .padding(.top, 72)
 
@@ -34,10 +39,10 @@ struct WakeUpView: View {
                 } label: {
                     Text("I woke up")
                         .font(.pretendard(17, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.rBlackWarm)
                         .frame(maxWidth: .infinity)
                         .frame(height: DS.btnH)
-                        .background(Color.rBlackWarm)
+                        .background(Color.white.opacity(0.90))
                         .clipShape(Capsule())
                 }
                 .padding(.horizontal, DS.hPad)
@@ -55,27 +60,6 @@ struct WakeUpView: View {
         }
     }
 
-    // MARK: - Background blob
-
-    private var warmBlob: some View {
-        Ellipse()
-            .fill(
-                RadialGradient(
-                    colors: [
-                        Color(hex: "#FF9E72").opacity(0.55),
-                        Color(hex: "#FFB199").opacity(0.30),
-                        .clear
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 200
-                )
-            )
-            .frame(width: 380, height: 320)
-            .blur(radius: 50)
-            .offset(y: 80)
-    }
-
     // MARK: - TODO section
 
     private var todoSection: some View {
@@ -83,18 +67,17 @@ struct WakeUpView: View {
             HStack {
                 Text("TODO")
                     .font(.prompt(12, weight: .medium))
-                    .foregroundStyle(Color.rTextGray)
+                    .foregroundStyle(.white.opacity(0.55))
                     .padding(.leading, 10)
                 Spacer()
                 Button { showAddTodo = true } label: {
                     Text("add")
                         .font(.prompt(12))
-                        .foregroundStyle(Color.rBlackWarm)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
-                        .background(Color.rSurfaceGlass)
+                        .background(Color.white.opacity(0.18))
                         .clipShape(Capsule())
-                        .cardShadow()
                 }
             }
             .padding(.horizontal, DS.hPad)
@@ -116,27 +99,27 @@ struct WakeUpView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .strokeBorder(Color.rTextWarm, lineWidth: 1)
+                        .strokeBorder(.white.opacity(0.55), lineWidth: 1)
                         .frame(width: 22, height: 22)
                     if item.isDone {
                         Image(systemName: "checkmark")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Color.rBlackWarm)
+                            .foregroundStyle(.white)
                     }
                 }
             }
 
             Text(item.text)
                 .font(.pretendard(16, weight: .medium))
-                .foregroundStyle(item.isDone ? Color.rTextSub : Color.rBlackWarm)
-                .strikethrough(item.isDone, color: Color.rTextSub)
+                .foregroundStyle(item.isDone ? .white.opacity(0.40) : .white)
+                .strikethrough(item.isDone, color: .white.opacity(0.40))
 
             Spacer()
         }
         .padding(.vertical, 14)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.rBorder)
+                .fill(.white.opacity(0.12))
                 .frame(height: 1)
         }
     }
