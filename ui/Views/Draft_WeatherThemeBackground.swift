@@ -357,21 +357,29 @@ private struct DraftTimeText: View {
     @State private var wobbleY: CGFloat = 0
 
     var body: some View {
-        Text("00:00")
-            .font(.radioCanadaBig(110))
-            .fontWeight(.bold)
-            .foregroundStyle(dark ? Color.white : Color.rBlackWarm)
-            .shadow(color: .white.opacity(0.50), radius:  3, x: 0, y: 0)
-            .shadow(color: .white.opacity(0.25), radius: 14, x: 0, y: 0)
-            .shadow(color: .white.opacity(0.12), radius: 32, x: 0, y: 0)
-            .opacity(0.65)
-            .blendMode(.overlay)
-            .offset(y: wobbleY)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                    wobbleY = 3.5
-                }
+        ZStack {
+            // Ambient glow — 텍스트 주변 오브 색 후광 (흐림은 여기서만)
+            Text("00:00")
+                .font(.radioCanadaBig(110))
+                .fontWeight(.black)
+                .foregroundStyle(Color.white)
+                .blur(radius: 16)
+                .opacity(0.35)
+                .blendMode(.screen)
+
+            // 유리 fill — 블러 없음(선명), black weight로 두꺼움, screen으로 배경 투과
+            Text("00:00")
+                .font(.radioCanadaBig(110))
+                .fontWeight(.black)
+                .foregroundStyle(Color.white.opacity(0.30))
+                .blendMode(.screen)
+        }
+        .offset(y: wobbleY)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                wobbleY = 3.5
             }
+        }
     }
 }
 
