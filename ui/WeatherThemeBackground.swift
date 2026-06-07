@@ -37,6 +37,11 @@ struct WeatherThemeBackground: View {
                         index:  i
                     )
                 }
+                if params.nightOverlayOpacity > 0 {
+                    params.nightOverlayColor
+                        .opacity(params.nightOverlayOpacity)
+                        .allowsHitTesting(false)
+                }
             }
             .clipped()
         }

@@ -73,6 +73,9 @@ struct WeatherVisualParams {
     let pulseEnabled: Bool
     let blobs: [BlobParams]
     let gradientAngleOffset: Double
+    // 시간대 색온도 오버레이 (WMO 0,1 제외)
+    let nightOverlayColor: Color
+    let nightOverlayOpacity: Double
 }
 
 // MARK: - WeatherThemeLibrary
@@ -311,6 +314,31 @@ struct WeatherThemeLibrary {
         }
     }
 
+    // MARK: - Time-of-Day Color Temperature Modifier
+
+    // 기존 clear-sky 팔레트 색상을 기준점으로 삼아 시간대별 색온도를 결정.
+    // clear-night(네이비) → sunrise(블루-라벤더) → sunrise-warm(웜 오렌지) → clear-day(낮, 기준값)
+    // WMO 0,1은 이미 시간별 테마 교체로 처리되므로 이 함수는 나머지 조건에만 적용.
+    private static func timeOfDayModifier(hour: Int)
+        -> (brightness: Double, saturation: Double, hueShift: Double,
+            overlayColor: Color, overlayOpacity: Double) {
+        switch hour {
+        case 0...4:  return (0.50, 0.60, +18, Color(red: 12/255, green: 18/255, blue: 75/255),  0.52)
+        case 5:      return (0.65, 0.72, +12, Color(red: 60/255, green: 72/255, blue: 160/255), 0.30)
+        case 6:      return (0.80, 0.88,  -6, Color(red: 240/255, green: 110/255, blue: 60/255), 0.20)
+        case 7:      return (0.88, 0.93,  -9, Color(red: 255/255, green: 128/255, blue: 55/255), 0.17)
+        case 8:      return (0.93, 0.96,  -6, Color(red: 255/255, green: 148/255, blue: 70/255), 0.10)
+        case 9...16: return (1.00, 1.00,   0, .clear, 0.00)
+        case 17:     return (0.90, 0.95,  -8, Color(red: 255/255, green: 128/255, blue: 48/255), 0.14)
+        case 18:     return (0.84, 0.90, -10, Color(red: 240/255, green: 108/255, blue: 42/255), 0.20)
+        case 19:     return (0.78, 0.85,  -7, Color(red: 220/255, green:  95/255, blue: 50/255), 0.18)
+        case 20:     return (0.68, 0.75, +10, Color(red:  55/255, green:  65/255, blue: 155/255), 0.25)
+        case 21:     return (0.56, 0.64, +16, Color(red:  15/255, green:  20/255, blue:  82/255), 0.45)
+        case 22:     return (0.52, 0.61, +18, Color(red:  12/255, green:  18/255, blue:  78/255), 0.50)
+        default:     return (0.50, 0.60, +18, Color(red:  12/255, green:  18/255, blue:  75/255), 0.52)
+        }
+    }
+
     // MARK: - Temperature → Hue Offset (°)
 
     static func temperatureHueOffset(_ temperature: Double) -> Double {
@@ -420,13 +448,33 @@ struct WeatherThemeLibrary {
         launchSeed: Int
     ) -> WeatherVisualParams {
         let theme = baseTheme(wmoCode: wmoCode, hour: hour)
-        return computeParams(
+        let base  = computeParams(
             theme:       theme,
             temperature: temperature,
             humidity:    humidity,
             windSpeed:   windSpeed,
             cloudCover:  cloudCover,
             launchSeed:  launchSeed
+        )
+        // WMO 0,1은 시간별 테마 교체로 이미 처리됨 — TOD modifier 생략
+        guard wmoCode != 0, wmoCode != 1 else { return base }
+
+        let tod = timeOfDayModifier(hour: hour)
+        return WeatherVisualParams(
+            theme:               base.theme,
+            blurRadius:          base.blurRadius,
+            orbOpacity:          base.orbOpacity,
+            animationDuration:   base.animationDuration,
+            displacementPercent: base.displacementPercent,
+            brightnessScale:     base.brightnessScale * tod.brightness,
+            saturationScale:     base.saturationScale  * tod.saturation,
+            hueOffset:           base.hueOffset + tod.hueShift,
+            turbulence:          base.turbulence,
+            pulseEnabled:        base.pulseEnabled,
+            blobs:               base.blobs,
+            gradientAngleOffset: base.gradientAngleOffset,
+            nightOverlayColor:   tod.overlayColor,
+            nightOverlayOpacity: tod.overlayOpacity
         )
     }
 
@@ -466,7 +514,9 @@ struct WeatherThemeLibrary {
             turbulence:          theme.turbulence,
             pulseEnabled:        theme.pulseEnabled,
             blobs:               blobs,
-            gradientAngleOffset: angle
+            gradientAngleOffset: angle,
+            nightOverlayColor:   .clear,
+            nightOverlayOpacity: 0
         )
     }
 }
