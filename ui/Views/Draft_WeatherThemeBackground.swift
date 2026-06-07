@@ -84,7 +84,8 @@ struct Draft_WeatherThemeBackground: View {
     }
 }
 
-// MARK: - Mesh Background (iOS 18+)
+// MARK: - Orb Background (iOS 18+)
+// 블러 처리된 원형 오브 3개가 배경 위에서 독립적으로 움직임
 
 @available(iOS 18.0, *)
 private struct DraftMeshBackground: View {
@@ -92,62 +93,68 @@ private struct DraftMeshBackground: View {
     let size:    CGSize
     let params:  WeatherVisualParams
 
-    @State private var q1 = false
-    @State private var q2 = false
-    @State private var q3 = false
-    @State private var r1 = false
-    @State private var r2 = false
-    @State private var e1 = false
-    @State private var colorPhase = false
+    @State private var ox1 = false   // orb1 X
+    @State private var oy1 = false   // orb1 Y
+    @State private var ox2 = false   // orb2 X
+    @State private var oy2 = false   // orb2 Y
+    @State private var ox3 = false   // orb3 X
+    @State private var oy3 = false   // orb3 Y
 
     private var palette: DraftPalette { DraftPalette.palette(for: themeId) }
-
-    // 바람 세기 → 애니메이션 속도 (animationDuration 크면 느림)
     private var spd: Double { max(0.55, min(1.6, params.animationDuration / 10.0)) }
-    // 습도 → 블러 (더 습할수록 약간 더 뭉개짐)
-    private var meshBlur: CGFloat { CGFloat(36 + params.blurRadius * 0.4) }
-
-    private var meshPoints: [SIMD2<Float>] {
-        let cx1: Float = q1 ? 0.78 : 0.22
-        let cx2: Float = q2 ? 0.18 : 0.82
-        let cx3: Float = q3 ? 0.72 : 0.28
-        let dy1: Float = r1 ?  0.16 : -0.16
-        let dy2: Float = r2 ? -0.18 :  0.18
-        let ey:  Float = e1 ?  0.10 : -0.10
-        return [
-            [0.0, 0.00],         [0.50, 0.00],         [1.0, 0.00],
-            [0.0, 0.25 + ey],    [cx1,  0.25 + dy1],   [1.0, 0.25 - ey],
-            [0.0, 0.50 - ey],    [cx2,  0.50 + dy2],   [1.0, 0.50 + ey],
-            [0.0, 0.75 + ey],    [cx3,  0.75 + dy1],   [1.0, 0.75 - ey],
-            [0.0, 1.00],         [0.50, 1.00],          [1.0, 1.00],
-        ]
-    }
+    private var orbBlur: CGFloat { CGFloat(60 + params.blurRadius * 0.6) }
+    private var orbD: CGFloat { size.width * 1.15 }
 
     var body: some View {
-        MeshGradient(
-            width: 3, height: 5,
-            points: meshPoints,
-            colors: colorPhase ? palette.meshColorsB : palette.meshColorsA,
-            smoothsColors: true
-        )
-        .scaleEffect(1.3)
-        .blur(radius: meshBlur)                             // 습도 반영
-        .saturation(params.saturationScale)                 // 흐림·비 → 채도 낮춤
-        .brightness(params.brightnessScale - 1.0)           // 구름량 → 밝기 조절
-        .hueRotation(.degrees(params.hueOffset * 0.25))     // 기온 → 미세 색조 이동
+        ZStack {
+            palette.background
+                .ignoresSafeArea()
+
+            // Orb 1 — 기본 크기, 상단 중심 이동
+            Circle()
+                .fill(palette.orb1)
+                .frame(width: orbD, height: orbD)
+                .blur(radius: orbBlur)
+                .offset(
+                    x: ox1 ?  size.width * 0.32 : -size.width * 0.28,
+                    y: oy1 ? -size.height * 0.22 :  size.height * 0.12
+                )
+
+            // Orb 2 — 약간 크게, 중단 이동
+            Circle()
+                .fill(palette.orb2)
+                .frame(width: orbD * 1.1, height: orbD * 1.1)
+                .blur(radius: orbBlur * 1.05)
+                .offset(
+                    x: ox2 ? -size.width * 0.20 :  size.width * 0.25,
+                    y: oy2 ?  size.height * 0.26 : -size.height * 0.08
+                )
+
+            // Orb 3 — 약간 작게, 하단 이동
+            Circle()
+                .fill(palette.orb3)
+                .frame(width: orbD * 0.85, height: orbD * 0.85)
+                .blur(radius: orbBlur * 0.9)
+                .offset(
+                    x: ox3 ?  size.width * 0.12 : -size.width * 0.22,
+                    y: oy3 ?  size.height * 0.32 : -size.height * 0.18
+                )
+        }
+        .saturation(params.saturationScale)
+        .brightness(params.brightnessScale - 1.0)
+        .hueRotation(.degrees(params.hueOffset * 0.25))
         .ignoresSafeArea()
         .onAppear { startAnimations() }
     }
 
     private func startAnimations() {
-        let s = spd   // 바람 세기에 따른 속도 배율
-        withAnimation(.easeInOut(duration:  5.0 * s).repeatForever(autoreverses: true))              { q1 = true }
-        withAnimation(.easeInOut(duration:  8.5 * s).repeatForever(autoreverses: true).delay(0.8))   { q2 = true }
-        withAnimation(.easeInOut(duration:  6.5 * s).repeatForever(autoreverses: true).delay(1.6))   { q3 = true }
-        withAnimation(.easeInOut(duration:  4.0 * s).repeatForever(autoreverses: true).delay(0.4))   { r1 = true }
-        withAnimation(.easeInOut(duration:  6.0 * s).repeatForever(autoreverses: true).delay(1.2))   { r2 = true }
-        withAnimation(.easeInOut(duration:  7.0 * s).repeatForever(autoreverses: true).delay(0.2))   { e1 = true }
-        withAnimation(.easeInOut(duration:  9.0 * s).repeatForever(autoreverses: true).delay(2.0))   { colorPhase = true }
+        let s = spd
+        withAnimation(.easeInOut(duration:  5.0 * s).repeatForever(autoreverses: true))              { ox1 = true }
+        withAnimation(.easeInOut(duration:  7.0 * s).repeatForever(autoreverses: true).delay(0.5))   { oy1 = true }
+        withAnimation(.easeInOut(duration:  8.5 * s).repeatForever(autoreverses: true).delay(0.8))   { ox2 = true }
+        withAnimation(.easeInOut(duration:  6.0 * s).repeatForever(autoreverses: true).delay(1.3))   { oy2 = true }
+        withAnimation(.easeInOut(duration:  6.5 * s).repeatForever(autoreverses: true).delay(1.6))   { ox3 = true }
+        withAnimation(.easeInOut(duration:  4.5 * s).repeatForever(autoreverses: true).delay(0.3))   { oy3 = true }
     }
 }
 
@@ -287,155 +294,55 @@ private struct DraftOrb: View {
     }
 }
 
-// MARK: - Draft Palette (20가지 날씨 × 3블롭 삼각 배치)
+// MARK: - Draft Palette (20가지 날씨 × background + 3 orb 구조)
 //
-// Frame 919.png 레퍼런스 스워치 색상 직접 반영
-// themeId → 스워치 매핑:
-//   sunrise/clear-day/hazy/heat          → 웜톤
-//   partly-cloudy/cloudy/overcast/mist   → 그레이-쿨
-//   drizzle/rain/snow/blizzard/frost     → 블루-아이스
-//   thunderstorm/clear-night             → 다크 네이비
-//   smoke/windy/sandstorm/showers/dust   → 특수
+// background: 베이스 솔리드 컬러
+// orb1/2/3:  블러 처리된 원형 블롭 3개 (크기: 1.0 / 1.1 / 0.85)
+// Frame 919.png 레퍼런스 스워치 직접 반영
 
 private struct DraftPalette {
-    let meshColorsA: [Color]
-    let meshColorsB: [Color]
+    let background: Color
+    let orb1: Color
+    let orb2: Color
+    let orb3: Color
 
-    // A:b1(상단우)/b2(중심)/b3(하단좌)  →  B:b2(상단우)/b3(중심)/b1(하단좌) — 시계방향 회전
-    private static func tri(_ bg: Color, _ b1: Color, _ b2: Color, _ b3: Color) -> DraftPalette {
-        DraftPalette(
-            meshColorsA: [
-                bg, b1, b1,
-                bg, b1, b2,
-                b2, b2, bg,
-                b3, b3, bg,
-                b3, bg, bg,
-            ],
-            meshColorsB: [
-                bg, b2, b2,
-                bg, b2, b3,
-                b3, b3, bg,
-                b1, b1, bg,
-                b1, bg, bg,
-            ]
-        )
+    private static func mk(_ bg: String, _ o1: String, _ o2: String, _ o3: String) -> DraftPalette {
+        DraftPalette(background: dc(bg), orb1: dc(o1), orb2: dc(o2), orb3: dc(o3))
     }
 
     static func palette(for themeId: String) -> DraftPalette {
         switch themeId {
+        // ── 웜톤 ────────────────────────────────────────────────
+        case "sunrise":       return mk("FEF0C0", "F8AA50", "F06840", "F8C880")
+        case "clear-day":     return mk("FFF8E0", "FCE488", "F8D474", "F8C498")
+        case "hazy":          return mk("FEF0DC", "FBD8B4", "F8C894", "FCE4CC")
+        case "smoke":         return mk("E2D6C4", "C4B49C", "B4A28C", "D6C8B4")
+        case "heat":          return mk("FEE4A0", "FC9050", "F86044", "E84030")
 
-        // 1. Sunrise — 골든오렌지+살몬 웜 그라디언트
-        case "sunrise":
-            return tri(dc("FEF0C0"), dc("F8AA50"), dc("F06840"), dc("F8C880"))
+        // ── 쿨/그레이 ────────────────────────────────────────────
+        case "partly-cloudy": return mk("EEF3FA", "CCDAEE", "B8CBDF", "DDE9F5")
+        case "cloudy":        return mk("E4EDF6", "BECEDE", "AABECE", "CDDAEB")
+        case "overcast":      return mk("F0EEEC", "DCDCD6", "CACAD0", "E8E6E4")
+        case "mist":          return mk("F4F4F4", "E0E0E0", "D0D0D4", "ECECEC")
 
-        // 2. Clear Day — 버터옐로우+소프트골드 파스텔
-        case "clear-day":
-            return tri(dc("FFF8E0"), dc("FCE488"), dc("F8D474"), dc("F8C498"))
+        // ── 블루-아이스 ──────────────────────────────────────────
+        case "rain":          return mk("CCDFF0", "7EAACF", "5688C0", "8EB2D8")
+        case "drizzle":       return mk("ECF3FC", "C4D8F0", "ACCCEA", "DAECFA")
+        case "snow":          return mk("F2F8FC", "D4E8F8", "BCD8F4", "E4F4FC")
+        case "blizzard":      return mk("E6EEF6", "BECEDD", "AABECE", "D4E0EE")
+        case "frost":         return mk("EEF6FC", "C6E0F4", "AECCEA", "E0F0FA")
+        case "dust":          return mk("E8EEF6", "B8CCDE", "A0BCCC", "D0DCEA")
 
-        // 3. Partly Cloudy — 라이트 블루-그레이 (매우 연함)
-        case "partly-cloudy":
-            return tri(dc("EEF3FA"), dc("CCDAEE"), dc("B8CBDF"), dc("DDE9F5"))
+        // ── 특수 ─────────────────────────────────────────────────
+        case "windy":         return mk("ECF8F4", "BCDACC", "A4CCBC", "D4EEE8")
+        case "showers":       return mk("EEF8F4", "BCE6D8", "9ED4C4", "DAEFE8")
+        case "sandstorm":     return mk("8C8070", "504840", "6A6050", "A09080")
 
-        // 4. Cloudy — 블루-그레이 (파틀리보다 채도 조금 높음)
-        case "cloudy":
-            return tri(dc("E4EDF6"), dc("BECEDE"), dc("AABECE"), dc("CDDAEB"))
+        // ── 다크 ─────────────────────────────────────────────────
+        case "thunderstorm":  return mk("24243E", "4858A8", "363660", "1C1C38")
+        case "clear-night":   return mk("1C2450", "262E6C", "C8A020", "2E3878")
 
-        // 5. Overcast — 거의 흰색, 워밍 그레이
-        case "overcast":
-            return tri(dc("F0EEEC"), dc("DCDCD6"), dc("CACAD0"), dc("E8E6E4"))
-
-        // 6. Rain — 뚜렷한 미드블루
-        case "rain":
-            return tri(dc("CCDFF0"), dc("7EAACF"), dc("5688C0"), dc("8EB2D8"))
-
-        // 7. Drizzle — 라이트블루 (레인보다 훨씬 연함)
-        case "drizzle":
-            return tri(dc("ECF3FC"), dc("C4D8F0"), dc("ACCCEA"), dc("DAECFA"))
-
-        // 8. Thunderstorm — 딥 인디고-퍼플네이비
-        case "thunderstorm":
-            return tri(dc("24243E"), dc("36366C"), dc("3C3468"), dc("1C1C38"))
-
-        // 9. Snow — 아이스 화이트-블루
-        case "snow":
-            return tri(dc("F2F8FC"), dc("D4E8F8"), dc("BCD8F4"), dc("E4F4FC"))
-
-        // 10. Blizzard — 쿨 그레이-블루 (스노우보다 더 진함)
-        case "blizzard":
-            return tri(dc("E6EEF6"), dc("BECEDD"), dc("AABECE"), dc("D4E0EE"))
-
-        // 11. Hail(dust) — 라이트 쿨 블루-그레이
-        case "dust":
-            return tri(dc("E8EEF6"), dc("B8CCDE"), dc("A0BCCC"), dc("D0DCEA"))
-
-        // 12. Fog(mist) — 뉴트럴 거의 화이트
-        case "mist":
-            return tri(dc("F4F4F4"), dc("E0E0E0"), dc("D0D0D4"), dc("ECECEC"))
-
-        // 13. Haze — 웜 피치-크림 글로우
-        case "hazy":
-            return tri(dc("FEF0DC"), dc("FBD8B4"), dc("F8C894"), dc("FCE4CC"))
-
-        // 14. Smoke — 웜 탄-카키
-        case "smoke":
-            return tri(dc("E2D6C4"), dc("C4B49C"), dc("B4A28C"), dc("D6C8B4"))
-
-        // 15. Windy — 라이트 세이지-민트
-        case "windy":
-            return tri(dc("ECF8F4"), dc("BCDACC"), dc("A4CCBC"), dc("D4EEE8"))
-
-        // 16. Tornado Watch(sandstorm) — 다크 올리브-그레이
-        case "sandstorm":
-            return tri(dc("766E66"), dc("5A5448"), dc("4E4840"), dc("847C74"))
-
-        // 17. Heatwave — 브라이트 오렌지→레드 그라디언트
-        case "heat":
-            return DraftPalette(
-                meshColorsA: [
-                    dc("FEE4A0"), dc("FC9050"), dc("FC9050"),
-                    dc("FEE4A0"), dc("FC9050"), dc("F86044"),
-                    dc("F86044"), dc("F86044"), dc("FEE4A0"),
-                    dc("E84030"), dc("E84030"), dc("FEE4A0"),
-                    dc("E84030"), dc("FEE4A0"), dc("FEE4A0"),
-                ],
-                meshColorsB: [
-                    dc("FEE4A0"), dc("F86044"), dc("F86044"),
-                    dc("FEE4A0"), dc("F86044"), dc("E84030"),
-                    dc("E84030"), dc("E84030"), dc("FEE4A0"),
-                    dc("FC9050"), dc("FC9050"), dc("FEE4A0"),
-                    dc("FC9050"), dc("FEE4A0"), dc("FEE4A0"),
-                ]
-            )
-
-        // 18. Freezing(frost) — 아이시 페일 블루
-        case "frost":
-            return tri(dc("EEF6FC"), dc("C6E0F4"), dc("AECCEA"), dc("E0F0FA"))
-
-        // 19. Starry Night — 딥 네이비 + 골드 문 포인트
-        case "clear-night":
-            return DraftPalette(
-                meshColorsA: [
-                    dc("1C2450"), dc("262E6C"), dc("262E6C"),
-                    dc("1C2450"), dc("262E6C"), dc("C8A020"),
-                    dc("C8A020"), dc("2E3878"), dc("1C2450"),
-                    dc("2E3878"), dc("1C2450"), dc("262E6C"),
-                    dc("1C2450"), dc("262E6C"), dc("1C2450"),
-                ],
-                meshColorsB: [
-                    dc("1C2450"), dc("C8A020"), dc("262E6C"),
-                    dc("262E6C"), dc("2E3878"), dc("1C2450"),
-                    dc("1C2450"), dc("262E6C"), dc("2E3878"),
-                    dc("262E6C"), dc("1C2450"), dc("C8A020"),
-                    dc("262E6C"), dc("1C2450"), dc("1C2450"),
-                ]
-            )
-
-        // 20. After Rain(showers) — 라이트 민트-그린
-        case "showers":
-            return tri(dc("EEF8F4"), dc("BCE6D8"), dc("9ED4C4"), dc("DAEFE8"))
-
-        default:
-            return tri(dc("FFF8E0"), dc("FCE488"), dc("F8D474"), dc("F8C498"))
+        default:              return mk("FFF8E0", "FCE488", "F8D474", "F8C498")
         }
     }
 }
