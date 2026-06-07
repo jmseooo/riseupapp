@@ -84,9 +84,9 @@ private struct AnimatedBlob: View {
             * CGFloat(0.5 + 0.5 * sin(Double(index * 137) * .pi / 180))
     }
 
-    // Turbulence — fast secondary jitter, amplitude scales with turbulence value
-    private var turbAmpX: CGFloat { CGFloat(params.turbulence) * 0.08 * size.width  }
-    private var turbAmpY: CGFloat { CGFloat(params.turbulence) * 0.08 * size.height }
+    // Turbulence — quadratic scaling so high values (0.8+) are dramatically more chaotic
+    private var turbAmpX: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.14 * size.width  }
+    private var turbAmpY: CGFloat { CGFloat(params.turbulence * params.turbulence) * 0.14 * size.height }
     private var turbDirX: CGFloat { (index % 2 == 0) ?  1 : -1 }
     private var turbDirY: CGFloat { (index % 3 == 0) ?  1 : -1 }
 
@@ -171,8 +171,8 @@ private struct AnimatedBlob: View {
 
         if params.pulseEnabled {
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(Double(index % 5) * 0.40))
-                withAnimation(.easeInOut(duration: 1.8 + Double(index % 3) * 0.55).repeatForever(autoreverses: true)) {
+                try? await Task.sleep(for: .seconds(Double(index % 5) * 0.10))
+                withAnimation(.easeInOut(duration: 0.6 + Double(index % 3) * 0.2).repeatForever(autoreverses: true)) {
                     pulsed = true
                 }
             }
