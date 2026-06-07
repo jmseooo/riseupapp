@@ -102,38 +102,6 @@ struct HomeView: View {
                                     .foregroundStyle(Color.rBlackWarm)
                             }
                         }
-                        .contentShape(Rectangle())
-                        .simultaneousGesture(
-                            MagnificationGesture(minimumScaleDelta: 0.01)
-                                .onChanged { _ in
-                                    guard !isPinching else { return }
-                                    isPinching = true
-                                    withAnimation(.easeInOut(duration: 0.08).repeatForever(autoreverses: true)) {
-                                        wobble = 5
-                                    }
-                                }
-                                .onEnded { _ in
-                                    isPinching = false
-                                    withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) {
-                                        wobble = 0
-                                    }
-                                    isPinchExpanded.toggle()
-                                    if isPinchExpanded {
-                                        pinchDotCount = 0
-                                        for i in 1...10 {
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
-                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                                                    pinchDotCount = i
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                                            pinchDotCount = 0
-                                        }
-                                    }
-                                }
-                        )
 
                     }
                     .padding(.horizontal, DS.hPad)
@@ -186,6 +154,38 @@ struct HomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+                MagnificationGesture(minimumScaleDelta: 0.01)
+                    .onChanged { _ in
+                        guard !isPinching else { return }
+                        isPinching = true
+                        withAnimation(.easeInOut(duration: 0.08).repeatForever(autoreverses: true)) {
+                            wobble = 5
+                        }
+                    }
+                    .onEnded { _ in
+                        isPinching = false
+                        withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) {
+                            wobble = 0
+                        }
+                        isPinchExpanded.toggle()
+                        if isPinchExpanded {
+                            pinchDotCount = 0
+                            for i in 1...10 {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
+                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                        pinchDotCount = i
+                                    }
+                                }
+                            }
+                        } else {
+                            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                                pinchDotCount = 0
+                            }
+                        }
+                    }
+            )
             .onReceive(ticker) { now = $0 }
             .sheet(isPresented: $showAppSettings) {
                 AppSettingsView()
