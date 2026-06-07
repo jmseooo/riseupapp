@@ -67,18 +67,6 @@ struct HomeView: View {
                                     .foregroundStyle(Color.rTextSub)
                             }
                             Spacer()
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    settings.offsetMinutes = 0
-                                }
-                            } label: {
-                                Text("reset")
-                                    .font(.pretendard(13, weight: .semibold))
-                                    .foregroundStyle(Color.rTextSub)
-                            }
-                            .opacity(settings.offsetMinutes != 0 ? 1 : 0)
-                            .disabled(settings.offsetMinutes == 0)
-                            .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
                         }
 
                         GlassTimeTextA(timeString: timeString)
@@ -89,6 +77,20 @@ struct HomeView: View {
                                 }
                             }
 
+                        // reset 버튼 — 시간 텍스트 바로 아래
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                settings.offsetMinutes = 0
+                            }
+                        } label: {
+                            Text("reset")
+                                .font(.pretendard(17, weight: .semibold))
+                                .foregroundStyle(Color.rTextSub)
+                        }
+                        .opacity(settings.offsetMinutes != 0 ? 1 : 0)
+                        .disabled(settings.offsetMinutes == 0)
+                        .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
+                        .padding(.top, 6)
                     }
                     .padding(.horizontal, DS.hPad)
 
@@ -113,9 +115,12 @@ struct HomeView: View {
                         .padding(.bottom, 8)
 
                     // ── Alarm card ─────────────────────────────────────────
-                    alarmCard
-                        .padding(.horizontal, DS.hPad)
-                        .padding(.bottom, 16)
+                    if !isPinchExpanded {
+                        alarmCard
+                            .padding(.horizontal, DS.hPad)
+                            .padding(.bottom, 16)
+                            .transition(.opacity)
+                    }
 
                     // ── Bottom nav ─────────────────────────────────────────
                     bottomNav
