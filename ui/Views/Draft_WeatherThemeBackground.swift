@@ -359,7 +359,11 @@ private struct DraftTimeText: View {
     var body: some View {
         Text("00:00")
             .font(.radioCanadaBig(110))
+            .fontWeight(.bold)
             .foregroundStyle(dark ? Color.white : Color.rBlackWarm)
+            .shadow(color: .white.opacity(0.50), radius:  3, x: 0, y: 0)
+            .shadow(color: .white.opacity(0.25), radius: 14, x: 0, y: 0)
+            .shadow(color: .white.opacity(0.12), radius: 32, x: 0, y: 0)
             .opacity(0.65)
             .blendMode(.overlay)
             .offset(y: wobbleY)
