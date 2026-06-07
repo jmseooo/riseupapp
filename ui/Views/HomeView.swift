@@ -10,7 +10,6 @@ struct HomeView: View {
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     @State private var showAppSettings = false
-    @State private var isSunriseExpanded = false
     @State private var isPinching: Bool = false
     @State private var isPinchExpanded: Bool = false
     @State private var wobble: CGFloat = 0
@@ -81,27 +80,13 @@ struct HomeView: View {
                             .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
                         }
 
-                        HStack(alignment: .center) {
-                            // 시안 A: GlassTimeTextA(timeString: timeString)
-                            // 시안 B: GlassTimeTextB(timeString: timeString)
-                            GlassTimeTextA(timeString: timeString)
-                                .offset(x: wobble, y: floatY)
-                                .onAppear {
-                                    withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                                        floatY = 3.5
-                                    }
+                        GlassTimeTextA(timeString: timeString)
+                            .offset(x: wobble, y: floatY)
+                            .onAppear {
+                                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                                    floatY = 3.5
                                 }
-                            Spacer()
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    isSunriseExpanded.toggle()
-                                }
-                            } label: {
-                                Image(systemName: isSunriseExpanded ? "chevron.down" : "chevron.up")
-                                    .font(.system(size: 22, weight: .medium))
-                                    .foregroundStyle(Color.rBlackWarm)
                             }
-                        }
 
                     }
                     .padding(.horizontal, DS.hPad)
@@ -138,14 +123,14 @@ struct HomeView: View {
 
                 // ── Pinch dots (right side) ────────────────────────────
                 if pinchDotCount > 0 {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 8) {
                         Spacer()
                         ForEach(0..<pinchDotCount, id: \.self) { _ in
                             Circle()
                                 .fill(Color.rBlackWarm.opacity(0.45))
                                 .frame(width: 5, height: 5)
                         }
-                        Spacer().frame(height: 220)
+                        Spacer().frame(height: 120)
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 22)
@@ -172,8 +157,8 @@ struct HomeView: View {
                         isPinchExpanded.toggle()
                         if isPinchExpanded {
                             pinchDotCount = 0
-                            for i in 1...10 {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
+                            for i in 1...20 {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
                                     withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                                         pinchDotCount = i
                                     }
