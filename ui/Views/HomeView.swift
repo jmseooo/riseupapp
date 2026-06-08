@@ -25,9 +25,6 @@ struct HomeView: View {
                     hour: Calendar.current.component(.hour, from: now)
                 )
 
-                // 임시 배경 orb — 날씨 매핑 전 테스트용
-                AnimatedOrbsBackground()
-
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
                     HStack(alignment: .top, spacing: 0) {

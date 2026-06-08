@@ -19,8 +19,6 @@ struct WakeUpView: View {
                 hour: Calendar.current.component(.hour, from: now)
             )
 
-            AnimatedOrbsBackground()
-
             VStack(alignment: .leading, spacing: 0) {
                 Text("Good morning")
                     .font(.pretendard(34, weight: .semibold))
