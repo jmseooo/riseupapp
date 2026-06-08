@@ -12,6 +12,7 @@ struct Draft_HomeView: View {
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     @State private var showAppSettings = false
+    @State private var glowPulse: CGFloat = 1.0
 
     var body: some View {
         NavigationStack {
@@ -59,9 +60,22 @@ struct Draft_HomeView: View {
                         HStack(alignment: .center) {
                             Text(timeString)
                                 .font(.radioCanadaBig(110))
-                                .foregroundStyle(Color.rBlackWarm)
+                                .fontWeight(.black)
+                                .foregroundStyle(.white)
+                                .shadow(color: .white,               radius: 3  * glowPulse)
+                                .shadow(color: .white.opacity(0.75),  radius: 10 * glowPulse)
+                                .shadow(color: .white.opacity(0.45),  radius: 20 * glowPulse)
+                                .shadow(color: .white.opacity(0.20),  radius: 30)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
+                                .onAppear {
+                                    withAnimation(
+                                        .easeInOut(duration: 2.8)
+                                        .repeatForever(autoreverses: true)
+                                    ) {
+                                        glowPulse = 1.5
+                                    }
+                                }
                             Spacer()
                             Image(systemName: "chevron.up")
                                 .font(.system(size: 22, weight: .medium))
