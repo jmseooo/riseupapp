@@ -222,12 +222,11 @@ struct HomeView: View {
     private var temperatureView: some View {
         HStack(alignment: .top, spacing: 0) {
             Text(weather.current.map { "\(Int($0.temperature.rounded()))" } ?? "--")
-                .font(.rajdhani(62))
+                .font(.rajdhani(18))
                 .foregroundStyle(Color.rTextMuted)
             Text("°")
                 .font(.system(size: 18, weight: .regular))
                 .foregroundStyle(Color.rTextMuted)
-                .padding(.top, 10)
         }
     }
 
