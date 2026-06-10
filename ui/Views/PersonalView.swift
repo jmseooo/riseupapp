@@ -39,7 +39,7 @@ struct PersonalView: View {
 
     private var navBar: some View {
         ZStack {
-            Text("personal")
+            Text("record")
                 .font(.pretendard(17, weight: .semibold))
                 .foregroundStyle(Color.rBlackWarm)
 
