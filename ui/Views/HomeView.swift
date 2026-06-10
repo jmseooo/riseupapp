@@ -28,7 +28,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
                     if !isPinchExpanded {
-                        HStack(alignment: .top, spacing: 0) {
+                        HStack(alignment: .center, spacing: 0) {
                             temperatureView
                             Spacer()
                             weatherConditionView
@@ -38,7 +38,6 @@ struct HomeView: View {
                                 Image(systemName: "gearshape")
                                     .font(.system(size: 20, weight: .medium))
                                     .foregroundStyle(Color.rTextMuted)
-                                    .padding(.top, 30)
                                     .padding(.leading, 12)
                             }
                         }
@@ -256,7 +255,6 @@ struct HomeView: View {
                 .font(.prompt(18, weight: .semiBold))
                 .foregroundStyle(Color.rTextMuted)
         }
-        .padding(.top, 30)
     }
 
     private var alarmCard: some View {
