@@ -90,6 +90,8 @@ struct HomeView: View {
                         .padding(.top, 6)
                     }
                     .padding(.horizontal, DS.hPad)
+                    .offset(y: isPinchExpanded ? -25 : 0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
 
                     // ── Countdown ──────────────────────────────────────────
                     if !isPinchExpanded, let cd = countdownText {
@@ -182,13 +184,15 @@ struct HomeView: View {
                     .onChanged { _ in
                         guard !isPinching else { return }
                         isPinching = true
-                        withAnimation(.easeInOut(duration: 0.08).repeatForever(autoreverses: true)) {
-                            wobble = 5
+                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                        withAnimation(.easeInOut(duration: 0.28).repeatForever(autoreverses: true)) {
+                            wobble = 3
                         }
                     }
                     .onEnded { _ in
                         isPinching = false
-                        withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                             wobble = 0
                         }
                         withAnimation(.easeInOut(duration: 0.3)) {
