@@ -20,6 +20,7 @@ extension Color {
     static let rGreenAccent   = Color(hex: "#9DCD7B")
     static let rGreenBright   = Color(hex: "#B0F28A")
     static let rBrown         = Color(hex: "#C8734A")
+    static let rOrange        = Color(hex: "#FF7A3D")
 
     // ── Text ──────────────────────────────────────────────────────────────
     static let rTextPrimary   = Color(hex: "#1A1714")
@@ -64,6 +65,9 @@ extension Font {
     }
     static func pretendard(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         .custom("PretendardVariable", size: size).weight(weight)
+    }
+    static func akiraExpanded(_ size: CGFloat) -> Font {
+        .custom("AkiraExpanded-SuperBold", size: size)
     }
 
     enum PromptWeight: String {

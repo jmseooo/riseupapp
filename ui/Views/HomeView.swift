@@ -258,38 +258,49 @@ struct HomeView: View {
 
     private var alarmCard: some View {
         @Bindable var settings = settings
-        return HStack {
-            Text("alarm")
-                .font(.pretendard(15, weight: .semibold))
-                .foregroundStyle(Color.rTextPrimary)
-                .kerning(-0.45)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("alarm")
+                    .font(.pretendard(15, weight: .semibold))
+                    .foregroundStyle(Color.rTextPrimary)
+                    .kerning(-0.45)
 
-            Spacer()
+                Spacer()
 
-            Toggle("", isOn: $settings.isEnabled)
-                .labelsHidden()
-                .tint(Color.rGreenAccent)
-                .onChange(of: settings.isEnabled) { _, enabled in
-                    Task {
-                        if enabled {
-                            let granted = await NotificationManager.shared.requestAuthorization()
-                            if granted {
-                                await NotificationManager.shared.scheduleSunriseAlarm()
-                                BackgroundTaskManager.shared.scheduleNextRefresh()
+                Toggle("", isOn: $settings.isEnabled)
+                    .labelsHidden()
+                    .tint(Color.rGreenAccent)
+                    .onChange(of: settings.isEnabled) { _, enabled in
+                        Task {
+                            if enabled {
+                                let granted = await NotificationManager.shared.requestAuthorization()
+                                if granted {
+                                    await NotificationManager.shared.scheduleSunriseAlarm()
+                                    BackgroundTaskManager.shared.scheduleNextRefresh()
+                                } else {
+                                    settings.isEnabled = false
+                                }
                             } else {
-                                settings.isEnabled = false
+                                await NotificationManager.shared.cancelSunriseAlarm()
                             }
-                        } else {
-                            await NotificationManager.shared.cancelSunriseAlarm()
                         }
                     }
-                }
+            }
+
+            if settings.isEnabled {
+                Text("The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time by pinching the screen.")
+                    .font(.prompt(13))
+                    .foregroundStyle(Color.rOrange)
+                    .kerning(-0.13)
+                    .padding(.top, 14)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
-        .padding(.horizontal, 20)
-        .frame(height: 71)
+        .padding(20)
         .background(Color.rSurfaceGlass)
         .clipShape(RoundedRectangle(cornerRadius: DS.cardRadius))
         .cardShadow()
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: settings.isEnabled)
     }
 
     private var bottomNav: some View {
