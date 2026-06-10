@@ -21,6 +21,10 @@ struct HomeView: View {
     private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
     @State private var lastHapticScale: CGFloat = 1.0
 
+    @State private var typingText: String = ""
+    @State private var typingTask: Task<Void, Never>? = nil
+    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time by pinching the screen."
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -261,6 +265,22 @@ struct HomeView: View {
     private var alarmCard: some View {
         @Bindable var settings = settings
         return VStack(alignment: .leading, spacing: 0) {
+            if !settings.isEnabled {
+                ZStack(alignment: .topLeading) {
+                    // 최종 높이 미리 확보 (투명)
+                    Text(alarmDesc)
+                        .opacity(0)
+                    // 타이핑 텍스트
+                    Text(typingText)
+                }
+                .font(.prompt(13))
+                .foregroundStyle(Color.rOrange)
+                .kerning(-0.13)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 14)
+                .transition(.opacity)
+            }
+
             HStack {
                 Text("alarm")
                     .font(.pretendard(15, weight: .semibold))
@@ -288,15 +308,6 @@ struct HomeView: View {
                         }
                     }
             }
-
-            if settings.isEnabled {
-                Text("The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time by pinching the screen.")
-                    .font(.prompt(13))
-                    .foregroundStyle(Color.rOrange)
-                    .kerning(-0.13)
-                    .padding(.top, 14)
-                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
-            }
         }
         .padding(20)
         .background(Color.rSurfaceGlass)
@@ -304,6 +315,32 @@ struct HomeView: View {
         .cardShadow()
         .clipped()
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: settings.isEnabled)
+        .onAppear {
+            if !settings.isEnabled { startTyping() }
+        }
+        .onChange(of: settings.isEnabled) { _, enabled in
+            if !enabled {
+                startTyping()
+            } else {
+                typingTask?.cancel()
+                typingText = ""
+            }
+        }
+    }
+
+    private func startTyping() {
+        typingTask?.cancel()
+        typingText = ""
+        typingTask = Task { @MainActor in
+            // 카드 펼침 애니메이션 후 타이핑 시작
+            try? await Task.sleep(nanoseconds: 380_000_000)
+            guard !Task.isCancelled else { return }
+            for char in alarmDesc {
+                try? await Task.sleep(nanoseconds: 22_000_000)
+                guard !Task.isCancelled else { break }
+                typingText.append(char)
+            }
+        }
     }
 
     private var bottomNav: some View {
