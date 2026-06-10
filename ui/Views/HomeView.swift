@@ -43,15 +43,6 @@ struct HomeView: View {
                     }
 
 
-                    // ── Divider ────────────────────────────────────────────
-                    if !isPinchExpanded {
-                        Rectangle()
-                            .fill(Color.rDivider)
-                            .frame(height: 1)
-                            .padding(.top, 20)
-                            .transition(.opacity)
-                    }
-
                     Spacer()
 
                     // ── Sunrise time ───────────────────────────────────────
