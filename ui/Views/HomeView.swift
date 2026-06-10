@@ -17,6 +17,10 @@ struct HomeView: View {
     @State private var pinchDotCount: Int = 0
     @State private var dragStartOffset: Int? = nil
 
+    private let hapticSelection = UISelectionFeedbackGenerator()
+    private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
+    @State private var lastHapticScale: CGFloat = 1.0
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -181,17 +185,24 @@ struct HomeView: View {
             .contentShape(Rectangle())
             .simultaneousGesture(
                 MagnificationGesture(minimumScaleDelta: 0.01)
-                    .onChanged { _ in
-                        guard !isPinching else { return }
-                        isPinching = true
-                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                        withAnimation(.easeInOut(duration: 0.28).repeatForever(autoreverses: true)) {
-                            wobble = 3
+                    .onChanged { scale in
+                        if !isPinching {
+                            isPinching = true
+                            lastHapticScale = scale
+                            hapticSelection.prepare()
+                            hapticImpact.prepare()
+                            hapticSelection.selectionChanged()
+                            withAnimation(.easeInOut(duration: 0.28).repeatForever(autoreverses: true)) {
+                                wobble = 3
+                            }
+                        } else if abs(scale - lastHapticScale) >= 0.04 {
+                            hapticSelection.selectionChanged()
+                            lastHapticScale = scale
                         }
                     }
                     .onEnded { _ in
                         isPinching = false
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        hapticImpact.impactOccurred()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                             wobble = 0
                         }
