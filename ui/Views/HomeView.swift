@@ -309,8 +309,8 @@ struct HomeView: View {
                 PersonalView()
                     .environment(settings)
             } label: {
-                Text("personal")
-                    .font(.prompt(18))
+                Image(systemName: "sun.min.fill")
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(Color.rBlackWarm)
             }
 
