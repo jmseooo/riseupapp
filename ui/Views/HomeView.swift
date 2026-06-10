@@ -296,6 +296,15 @@ struct HomeView: View {
                     .foregroundStyle(Color.rBlackWarm)
             }
 
+            NavigationLink {
+                TodoView()
+                    .environment(settings)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(Color.rBlackWarm)
+            }
+
             Button {
                 showAppSettings = true
             } label: {
