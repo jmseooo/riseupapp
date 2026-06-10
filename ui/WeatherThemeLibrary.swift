@@ -311,6 +311,11 @@ struct WeatherThemeLibrary {
         case 85, 86:      return t["snow"]!
         case 95:          return t["thunderstorm"]!
         case 96, 99:      return t["thunderstorm"]!
+        case 200:         return t["windy"]!
+        case 201:         return t["smoke"]!
+        case 202:         return t["dust"]!
+        case 203:         return t["heat"]!
+        case 204:         return t["overcast"]!
         default:          return t["clear-day"]!
         }
     }

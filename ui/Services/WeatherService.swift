@@ -63,11 +63,16 @@ final class WeatherService {
     private func conditionToWMO(_ condition: WeatherKit.WeatherCondition) -> Int {
         switch condition {
         case .clear:                                                     return 0
-        case .mostlyClear, .hot, .breezy, .windy, .frigid:              return 1
+        case .mostlyClear:                                               return 1
+        case .breezy, .windy:                                            return 200
+        case .smoky:                                                     return 201
+        case .blowingDust:                                               return 202
+        case .hot:                                                       return 203
+        case .frigid:                                                    return 204
         case .partlyCloudy:                                              return 2
         case .mostlyCloudy, .cloudy:                                     return 3
         case .foggy:                                                     return 45
-        case .haze, .smoky, .blowingDust:                               return 5
+        case .haze:                                                      return 5
         case .drizzle:                                                   return 51
         case .rain:                                                      return 61
         case .heavyRain:                                                 return 65
