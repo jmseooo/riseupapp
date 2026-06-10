@@ -106,6 +106,7 @@ struct HomeView: View {
                     Spacer()
 
                     // ── Debug info ────────────────────────────────────────
+                    #if targetEnvironment(simulator)
                     if !isPinchExpanded {
                         Text(debugInfo)
                             .font(.system(size: 12))
@@ -115,6 +116,7 @@ struct HomeView: View {
                             .padding(.bottom, 8)
                             .transition(.opacity)
                     }
+                    #endif
 
                     // alarmCard + bottomNav 높이만큼 여백 확보
                     if !isPinchExpanded {
