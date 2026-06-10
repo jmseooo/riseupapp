@@ -1,16 +1,14 @@
 import SwiftUI
 
-// 시안 A — Canvas Orb-Through-Text
-// AnimatedOrbsBackground와 동일한 orb 파라미터 + 전역 좌표 오프셋을 사용하여
-// 배경 orb가 정확히 동일한 위치에서 글자 내부를 통과하게 렌더링.
-struct GlassTimeTextA: View {
+// 폰트 실험용 — GlassTimeTextA와 동일한 구조, 폰트만 AkiraExpanded로 교체
+struct GlassTimeTextDraft: View {
     let timeString: String
     @State private var globalOffset: CGPoint = .zero
 
     var body: some View {
         Text(timeString)
-            .font(.pretendard(110, weight: .heavy))
-            .foregroundStyle(Color.clear)   // 레이아웃만 잡음
+            .font(.akiraExpanded(110))
+            .foregroundStyle(Color.clear)
             .background(
                 GeometryReader { geo in
                     Color.clear
@@ -31,29 +29,14 @@ struct GlassTimeTextA: View {
 
                         let resolved = ctx.resolve(
                             Text(timeString)
-                                .font(.pretendard(110, weight: .heavy))
+                                .font(.akiraExpanded(110))
                         )
-
-                        // ── orb를 전역 좌표로 계산 → 로컬로 변환 → 텍스트로 마스킹 ──
-                        // 흰 베이스 — orb가 없는 영역도 흰색으로
-                        ctx.drawLayer { layer in
-                            layer.fill(
-                                Path(CGRect(origin: .zero, size: size)),
-                                with: .color(.white)
-                            )
-                            layer.blendMode = .destinationIn
-                            layer.draw(resolved, at: mid, anchor: .center)
-                        }
 
                         ctx.drawLayer { layer in
                             for (i, o) in OrbData.orbs.enumerated() {
                                 let ph = t * o.s + Double(i) * 1.40
-
-                                // AnimatedOrbsBackground와 완전히 동일한 공식
                                 let gx = (o.x + sin(ph)        * 0.11) * sw
                                 let gy = (o.y + cos(ph * 0.85) * 0.10) * sh
-
-                                // 캔버스 로컬 좌표 = 전역 위치 - 텍스트 뷰 원점
                                 let lx = gx - globalOffset.x
                                 let ly = gy - globalOffset.y
                                 let r  = o.r * min(sw, sh) * 1.35
@@ -71,22 +54,19 @@ struct GlassTimeTextA: View {
                                     )
                                 )
                             }
-
-                            // 텍스트 형태로만 잘라냄
                             layer.blendMode = .destinationIn
                             layer.draw(resolved, at: mid, anchor: .center)
                         }
 
-                        // 흰 rim
-                        ctx.blendMode = .normal
-                        ctx.opacity   = 0.0
+                        ctx.blendMode = .screen
+                        ctx.opacity   = 0.38
                         ctx.draw(resolved, at: mid, anchor: .center)
                     }
                 }
                 .allowsHitTesting(false)
             }
             .lineLimit(1)
-            .minimumScaleFactor(0.6)
+            .minimumScaleFactor(0.5)
     }
 }
 
@@ -94,6 +74,9 @@ struct GlassTimeTextA: View {
     ZStack {
         Color(red: 0.06, green: 0.04, blue: 0.12).ignoresSafeArea()
         AnimatedOrbsBackground()
-        GlassTimeTextA(timeString: "6:24")
+        VStack(spacing: 40) {
+            GlassTimeTextDraft(timeString: "5:48")
+            GlassTimeTextA(timeString: "5:48")
+        }
     }
 }

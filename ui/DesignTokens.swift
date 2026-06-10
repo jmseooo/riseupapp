@@ -64,7 +64,19 @@ extension Font {
         .custom("Prompt-\(weight.rawValue)", size: size)
     }
     static func pretendard(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom("PretendardVariable", size: size).weight(weight)
+        let name: String
+        switch weight {
+        case .black:      name = "Pretendard-Black"
+        case .heavy:      name = "Pretendard-ExtraBold"
+        case .bold:       name = "Pretendard-Bold"
+        case .semibold:   name = "Pretendard-SemiBold"
+        case .medium:     name = "Pretendard-Medium"
+        case .light:      name = "Pretendard-Light"
+        case .thin:       name = "Pretendard-Thin"
+        case .ultraLight: name = "Pretendard-ExtraLight"
+        default:          name = "Pretendard-Regular"
+        }
+        return .custom(name, size: size)
     }
     static func akiraExpanded(_ size: CGFloat) -> Font {
         .custom("AkiraExpanded-SuperBold", size: size)
