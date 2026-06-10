@@ -74,7 +74,7 @@ struct HomeView: View {
 
                         GlassTimeTextA(timeString: timeString)
                             .offset(x: wobble, y: floatY)
-                            .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .leading)
+                            .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .topLeading)
                             .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
                             .onAppear {
                                 withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
