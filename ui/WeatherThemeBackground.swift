@@ -132,7 +132,7 @@ private struct AnimatedBlob: View {
                 RadialGradient(
                     colors: [
                         blob.startColor.opacity(effectiveOpacity),
-                        blob.endColor.opacity(effectiveOpacity * 0.3),
+                        blob.endColor.opacity(effectiveOpacity * 0.75),
                         .clear
                     ],
                     center:      .center,
@@ -140,8 +140,8 @@ private struct AnimatedBlob: View {
                     endRadius:   blobSize / 2
                 )
             )
-            .frame(width: blobSize, height: blobSize)
-            .blur(radius: params.blurRadius)
+            .frame(width: blobSize * 1.2, height: blobSize * 1.2)
+            .blur(radius: params.blurRadius * 0.6)
             .hueRotation(.degrees(params.hueOffset))
             .brightness(params.brightnessScale - 1.0)
             .saturation(params.saturationScale)

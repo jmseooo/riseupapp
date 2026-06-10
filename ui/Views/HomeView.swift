@@ -32,14 +32,6 @@ struct HomeView: View {
                             temperatureView
                             Spacer()
                             weatherConditionView
-                            Button {
-                                showAppSettings = true
-                            } label: {
-                                Image(systemName: "gearshape")
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundStyle(Color.rTextMuted)
-                                    .padding(.leading, 12)
-                            }
                         }
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 8)
@@ -296,20 +288,19 @@ struct HomeView: View {
     private var bottomNav: some View {
         HStack(spacing: 24) {
             NavigationLink {
-                SettingsView()
-                    .environment(settings)
-            } label: {
-                Text("setting")
-                    .font(.prompt(18))
-                    .foregroundStyle(Color.rBlackWarm)
-            }
-
-            NavigationLink {
                 PersonalView()
                     .environment(settings)
             } label: {
                 Text("personal")
                     .font(.prompt(18))
+                    .foregroundStyle(Color.rBlackWarm)
+            }
+
+            Button {
+                showAppSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(Color.rBlackWarm)
             }
         }
