@@ -30,6 +30,7 @@ struct PersonalView: View {
             }
         }
         .navigationBarHidden(true)
+        .background(SwipeBackEnabler())
         .sheet(isPresented: $showAddTodo) {
             addTodoSheet
         }

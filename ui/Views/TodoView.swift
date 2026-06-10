@@ -155,7 +155,7 @@ struct TodoView: View {
     }
 }
 
-private struct SwipeBackEnabler: UIViewControllerRepresentable {
+struct SwipeBackEnabler: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
     func updateUIViewController(_ vc: UIViewController, context: Context) {
         DispatchQueue.main.async {
