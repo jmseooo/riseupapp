@@ -149,13 +149,13 @@ struct WeatherThemeLibrary {
             orb(size:  60, "F0E5DC", "DECBB8"),
         ], blur: 40, opacity: 0.45, dur: 20, turb: 0.1, count: 4...7),
 
-        // Muted grey-blue — medium pace, soft diffusion.
-        "cloudy": makeTheme("cloudy", angle: 180, bg: "EDF1F6", "DDE5EE", orbs: [
-            orb(size: 150, "C0CFE0", "A2BAD2"),
-            orb(size:  95, "CDDAEA", "A8BDD5"),
-            orb(size:  80, "D0DCEC", "ADC2D8"),
-            orb(size:  55, "E5DDD0", "C8B9A5"),
-        ], blur: 55, opacity: 0.55, dur: 16, turb: 0.2, count: 4...8),
+        // Lavender + pink contrast — fast drift, distinct orbs clearly visible.
+        "cloudy": makeTheme("cloudy", angle: 175, bg: "F4F2FA", "ECEAF4", orbs: [
+            orb(size: 160, "C8B4EC", "A89CD8"),  // soft violet/lavender
+            orb(size: 105, "ECC0D4", "D4A0BC"),  // dusty pink/rose
+            orb(size:  80, "B8C4F0", "98AADC"),  // periwinkle blue
+            orb(size:  58, "E0D0F0", "C8B8DC"),  // light purple accent
+        ], blur: 36, opacity: 0.72, dur: 7, turb: 0.3, count: 4...7),
 
         // Heavy, slow — blobs barely move. Oppressive ceiling feel.
         "overcast": makeTheme("overcast", angle: 195, bg: "F1E8E8", "E2D2D5", orbs: [

@@ -342,7 +342,7 @@ private struct DraftPalette {
 
         // ── 쿨/그레이 ────────────────────────────────────────────
         case "partly-cloudy": return mk("EEF3FA", "CCDAEE", "B8CBDF", "DDE9F5")
-        case "cloudy":        return mk("E4EDF6", "BECEDE", "AABECE", "CDDAEB")
+        case "cloudy":        return mk("F4F2FA", "C8B4EC", "ECC0D4", "B8C4F0")
         case "overcast":      return mk("F0EEEC", "DCDCD6", "CACAD0", "E8E6E4")
         case "mist":          return mk("F4F4F4", "E0E0E0", "D0D0D4", "ECECEC")
 
