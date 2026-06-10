@@ -112,20 +112,22 @@ struct HomeView: View {
                             .transition(.opacity)
                     }
 
-                    // ── Alarm card ─────────────────────────────────────────
+                    // alarmCard + bottomNav 높이만큼 여백 확보
                     if !isPinchExpanded {
+                        Color.clear.frame(height: 140)
+                    }
+                }
+
+                // ── Alarm card + Bottom nav (고정 오버레이) ────────────────
+                if !isPinchExpanded {
+                    VStack(spacing: 0) {
                         alarmCard
                             .padding(.horizontal, DS.hPad)
                             .padding(.bottom, 16)
-                            .transition(.opacity)
-                    }
-
-                    // ── Bottom nav ─────────────────────────────────────────
-                    if !isPinchExpanded {
                         bottomNav
                             .padding(.bottom, 24)
-                            .transition(.opacity)
                     }
+                    .transition(.opacity)
                 }
 
                 // ── Pinch dots + drag to offset time (right side) ─────
@@ -293,14 +295,15 @@ struct HomeView: View {
                     .foregroundStyle(Color.rOrange)
                     .kerning(-0.13)
                     .padding(.top, 14)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
         }
         .padding(20)
         .background(Color.rSurfaceGlass)
         .clipShape(RoundedRectangle(cornerRadius: DS.cardRadius))
         .cardShadow()
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: settings.isEnabled)
+        .clipped()
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: settings.isEnabled)
     }
 
     private var bottomNav: some View {
