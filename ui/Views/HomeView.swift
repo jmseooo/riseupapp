@@ -27,28 +27,34 @@ struct HomeView: View {
 
                 VStack(spacing: 0) {
                     // ── Weather row ────────────────────────────────────────
-                    HStack(alignment: .top, spacing: 0) {
-                        temperatureView
-                        Spacer()
-                        weatherConditionView
-                        Button {
-                            showAppSettings = true
-                        } label: {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundStyle(Color.rTextMuted)
-                                .padding(.top, 30)
-                                .padding(.leading, 12)
+                    if !isPinchExpanded {
+                        HStack(alignment: .top, spacing: 0) {
+                            temperatureView
+                            Spacer()
+                            weatherConditionView
+                            Button {
+                                showAppSettings = true
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundStyle(Color.rTextMuted)
+                                    .padding(.top, 30)
+                                    .padding(.leading, 12)
+                            }
                         }
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 8)
+                        .transition(.opacity)
                     }
-                    .padding(.horizontal, DS.hPad)
-                    .padding(.top, 8)
 
                     // ── Divider ────────────────────────────────────────────
-                    Rectangle()
-                        .fill(Color.rDivider)
-                        .frame(height: 1)
-                        .padding(.top, 20)
+                    if !isPinchExpanded {
+                        Rectangle()
+                            .fill(Color.rDivider)
+                            .frame(height: 1)
+                            .padding(.top, 20)
+                            .transition(.opacity)
+                    }
 
                     Spacer()
 
@@ -68,6 +74,8 @@ struct HomeView: View {
 
                         GlassTimeTextA(timeString: timeString)
                             .offset(x: wobble, y: floatY)
+                            .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .leading)
+                            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
                             .onAppear {
                                 withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
                                     floatY = 3.5
@@ -92,24 +100,28 @@ struct HomeView: View {
                     .padding(.horizontal, DS.hPad)
 
                     // ── Countdown ──────────────────────────────────────────
-                    if let cd = countdownText {
+                    if !isPinchExpanded, let cd = countdownText {
                         Text(cd)
                             .font(.prompt(18))
                             .foregroundStyle(Color.rBlackWarm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, DS.hPad)
                             .padding(.top, 10)
+                            .transition(.opacity)
                     }
 
                     Spacer()
 
                     // ── Debug info ────────────────────────────────────────
-                    Text(debugInfo)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.gray)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, DS.hPad)
-                        .padding(.bottom, 8)
+                    if !isPinchExpanded {
+                        Text(debugInfo)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, DS.hPad)
+                            .padding(.bottom, 8)
+                            .transition(.opacity)
+                    }
 
                     // ── Alarm card ─────────────────────────────────────────
                     if !isPinchExpanded {
@@ -120,8 +132,11 @@ struct HomeView: View {
                     }
 
                     // ── Bottom nav ─────────────────────────────────────────
-                    bottomNav
-                        .padding(.bottom, 24)
+                    if !isPinchExpanded {
+                        bottomNav
+                            .padding(.bottom, 24)
+                            .transition(.opacity)
+                    }
                 }
 
                 // ── Pinch dots + drag to offset time (right side) ─────
@@ -184,7 +199,9 @@ struct HomeView: View {
                         withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) {
                             wobble = 0
                         }
-                        isPinchExpanded.toggle()
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isPinchExpanded.toggle()
+                        }
                         if isPinchExpanded {
                             pinchDotCount = 0
                             for i in 1...15 {
