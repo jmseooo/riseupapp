@@ -38,7 +38,7 @@ struct HomeView: View {
                             weatherConditionView
                         }
                         .padding(.horizontal, DS.hPad)
-                        .padding(.top, 8)
+                        .padding(.top, 60)
                         .transition(.opacity)
                     }
 
