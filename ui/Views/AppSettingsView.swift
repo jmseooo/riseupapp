@@ -48,7 +48,7 @@ struct AppSettingsView: View {
             }
         }
         .padding(.horizontal, DS.hPad)
-        .padding(.top, 12)
+        .padding(.top, 30)
         .padding(.bottom, 16)
     }
 

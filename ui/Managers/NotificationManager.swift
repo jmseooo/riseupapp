@@ -95,6 +95,11 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
                 AlarmSettings.shared.recordWake()
                 AlarmSettings.shared.pendingWakeUp = true
             }
+        case UNNotificationDismissActionIdentifier:
+            // 알림을 스와이프로 닫아도 다음 앱 진입 시 WakeUpView 표시
+            await MainActor.run {
+                AlarmSettings.shared.pendingWakeUp = true
+            }
         case "SNOOZE_ACTION":
             await scheduleSnooze(at: Date().addingTimeInterval(5 * 60))
         default:

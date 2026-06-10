@@ -13,13 +13,16 @@ final class AlarmSettings {
         static let locationPermissionDenied = "location_permission_denied"
         static let wakeHistory = "wake_history"
         static let repeatEnabled = "alarm_repeat_enabled"
+        static let pendingWakeUp = "pending_wake_up"
     }
 
     // Seoul fallback coordinates
     private static let fallbackLatitude = 37.5665
     private static let fallbackLongitude = 126.9780
 
-    var pendingWakeUp: Bool = false
+    var pendingWakeUp: Bool = false {
+        didSet { UserDefaults.standard.set(pendingWakeUp, forKey: Keys.pendingWakeUp) }
+    }
     var wakeHistory: [Date] {
         didSet {
             UserDefaults.standard.set(wakeHistory.map(\.timeIntervalSince1970), forKey: Keys.wakeHistory)
@@ -46,6 +49,7 @@ final class AlarmSettings {
         longitude = storedLon == 0 ? Self.fallbackLongitude : storedLon
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Keys.hasCompletedOnboarding)
         locationPermissionDenied = UserDefaults.standard.bool(forKey: Keys.locationPermissionDenied)
+        pendingWakeUp = UserDefaults.standard.bool(forKey: Keys.pendingWakeUp)
     }
 
     // API 응답의 utc_offset_seconds 우선 사용, 없으면 경도 기반 근사값
