@@ -38,6 +38,7 @@ struct HomeView: View {
                         .transition(.opacity)
                     }
 
+
                     // ── Divider ────────────────────────────────────────────
                     if !isPinchExpanded {
                         Rectangle()
@@ -231,10 +232,10 @@ struct HomeView: View {
         HStack(alignment: .top, spacing: 0) {
             Text(weather.current.map { "\(Int($0.temperature.rounded()))" } ?? "--")
                 .font(.rajdhani(18))
-                .foregroundStyle(Color.rTextMuted)
+                .foregroundStyle(.white)
             Text("°")
                 .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(Color.rTextMuted)
+                .foregroundStyle(.white)
         }
     }
 
@@ -242,10 +243,10 @@ struct HomeView: View {
         HStack(spacing: 6) {
             Image(systemName: weatherIcon)
                 .font(.system(size: 22))
-                .foregroundStyle(Color.rTextMuted)
+                .foregroundStyle(.white)
             Text(greeting)
                 .font(.prompt(18, weight: .semiBold))
-                .foregroundStyle(Color.rTextMuted)
+                .foregroundStyle(.white)
         }
     }
 

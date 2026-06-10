@@ -10,6 +10,7 @@ struct TodoView: View {
     @State private var isAdding = false
     @State private var newTodoText = ""
     @FocusState private var fieldFocused: Bool
+    @State private var hour = Calendar.current.component(.hour, from: Date())
 
     private let weather = WeatherService.shared
 
@@ -17,7 +18,7 @@ struct TodoView: View {
         ZStack {
             WeatherThemeBackground(
                 weather: weather.current,
-                hour: Calendar.current.component(.hour, from: Date())
+                hour: hour
             )
 
             VStack(spacing: 0) {
@@ -27,35 +28,35 @@ struct TodoView: View {
                         .font(.prompt(12, weight: .medium))
                         .foregroundStyle(Color.rTextGray)
                     Spacer()
-                    Button { startAdding() } label: {
-                        Text("add")
-                            .font(.prompt(12))
-                            .foregroundStyle(Color.rBlackWarm)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
-                            .background(Color.rSurfaceGlass)
-                            .clipShape(Capsule())
-                            .cardShadow()
-                    }
                 }
                 .padding(.horizontal, DS.hPad)
                 .padding(.top, 60)
 
                 // ── Todo list ──────────────────────────────────────────
-                ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(todos) { item in
-                            todoRow(item: item)
-                        }
-                        if isAdding {
-                            inlineAddRow
-                        }
+                List {
+                    ForEach(todos) { item in
+                        todoRow(item: item)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 0, leading: DS.hPad, bottom: 0, trailing: DS.hPad))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    modelContext.delete(item)
+                                } label: {
+                                    Label("삭제", systemImage: "trash")
+                                }
+                            }
                     }
-                    .padding(.horizontal, DS.hPad)
-                    .padding(.top, 16)
+                    if isAdding {
+                        inlineAddRow
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 0, leading: DS.hPad, bottom: 0, trailing: DS.hPad))
+                    }
                 }
-
-                Spacer()
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .padding(.top, 16)
 
                 // ── 추가 button ────────────────────────────────────────
                 Button { handleAddButton() } label: {
