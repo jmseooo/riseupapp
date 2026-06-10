@@ -296,7 +296,8 @@ struct WeatherThemeLibrary {
             default:             return t["clear-night"]!
             }
         case 2:           return t["partly-cloudy"]!
-        case 3:           return t["overcast"]!
+        case 3:           return t["cloudy"]!
+        case 4, 5, 6, 7:  return t["hazy"]!
         case 45, 48:      return t["mist"]!
         case 51, 53, 55:  return t["drizzle"]!
         case 56, 57:      return t["drizzle"]!

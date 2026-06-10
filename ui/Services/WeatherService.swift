@@ -66,7 +66,8 @@ final class WeatherService {
         case .mostlyClear, .hot, .breezy, .windy, .frigid:              return 1
         case .partlyCloudy:                                              return 2
         case .mostlyCloudy, .cloudy:                                     return 3
-        case .foggy, .haze, .smoky, .blowingDust:                       return 45
+        case .foggy:                                                     return 45
+        case .haze, .smoky, .blowingDust:                               return 5
         case .drizzle:                                                   return 51
         case .rain:                                                      return 61
         case .heavyRain:                                                 return 65
