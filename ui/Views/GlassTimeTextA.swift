@@ -9,7 +9,7 @@ struct GlassTimeTextA: View {
 
     var body: some View {
         Text(timeString)
-            .font(.pretendard(110, weight: .heavy))
+            .font(.pretendard(60, weight: .semibold))
             .foregroundStyle(Color.clear)   // 레이아웃만 잡음
             .background(
                 GeometryReader { geo in
@@ -31,7 +31,7 @@ struct GlassTimeTextA: View {
 
                         let resolved = ctx.resolve(
                             Text(timeString)
-                                .font(.pretendard(110, weight: .heavy))
+                                .font(.pretendard(60, weight: .semibold))
                         )
 
                         // ── orb를 전역 좌표로 계산 → 로컬로 변환 → 텍스트로 마스킹 ──

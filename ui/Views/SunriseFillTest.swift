@@ -60,7 +60,7 @@ struct SunriseFillTest: View {
                     Spacer()
 
                     Text("6:24")
-                        .font(.system(size: 96, weight: .bold))
+                        .font(.system(size: 60, weight: .semibold))
                         .foregroundStyle(.white)
 
                     Text("sunrise time")
