@@ -23,7 +23,8 @@ struct HomeView: View {
 
     @State private var typingText: String = ""
     @State private var typingTask: Task<Void, Never>? = nil
-    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time by pinching the screen."
+    @State private var descVisible: Bool = false
+    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen."
 
     var body: some View {
         NavigationStack {
@@ -51,18 +52,6 @@ struct HomeView: View {
 
                     // ── Sunrise time ───────────────────────────────────────
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .bottom) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(dayLabel)
-                                    .font(.pretendard(13, weight: .semibold))
-                                    .foregroundStyle(Color.rTextSub)
-                                Text("sunrise time")
-                                    .font(.pretendard(13, weight: .semibold))
-                                    .foregroundStyle(Color.rTextSub)
-                            }
-                            Spacer()
-                        }
-
                         GlassTimeTextA(timeString: timeString)
                             .offset(x: wobble, y: floatY)
                             .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .topLeading)
@@ -88,23 +77,39 @@ struct HomeView: View {
                         .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
                         .padding(.top, 6)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, DS.hPad)
                     .offset(y: isPinchExpanded ? -25 : 0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
 
                     // ── Countdown ──────────────────────────────────────────
                     if !isPinchExpanded, let cd = countdownText {
-                        Text(cd)
-                            .font(.prompt(18))
-                            .foregroundStyle(Color.rBlackWarm)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, DS.hPad)
-                            .padding(.top, 2)
-                            .transition(.opacity)
+                        HStack {
+                            Text(cd)
+                                .font(.prompt(18))
+                                .foregroundStyle(Color.rBlackWarm)
+                            Spacer()
+                            Button {
+                                if descVisible {
+                                    typingTask?.cancel()
+                                    typingText = ""
+                                    withAnimation(.easeOut(duration: 0.3)) { descVisible = false }
+                                } else {
+                                    startTyping()
+                                }
+                            } label: {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.rTextSub)
+                            }
+                        }
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 2)
+                        .transition(.opacity)
                     }
 
                     // ── Alarm description ──────────────────────────────────
-                    if !settings.isEnabled && !isPinchExpanded {
+                    if !settings.isEnabled && !isPinchExpanded && descVisible {
                         ZStack(alignment: .topLeading) {
                             Text(alarmDesc).opacity(0)
                             Text(typingText)
@@ -116,7 +121,6 @@ struct HomeView: View {
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
                         .transition(.opacity)
-                        .onAppear { startTyping() }
                     }
 
                     Color.clear.frame(height: 116)
@@ -246,6 +250,9 @@ struct HomeView: View {
             .sheet(isPresented: $showAppSettings) {
                 AppSettingsView()
             }
+            .onAppear {
+                if !settings.isEnabled { startTyping() }
+            }
             .task {
                 LocationManager.shared.updateLocation()
                 await WeatherService.shared.fetch(latitude: settings.latitude, longitude: settings.longitude)
@@ -321,8 +328,8 @@ struct HomeView: View {
     private func startTyping() {
         typingTask?.cancel()
         typingText = ""
+        withAnimation(.easeIn(duration: 0.25)) { descVisible = true }
         typingTask = Task { @MainActor in
-            // 카드 펼침 애니메이션 후 타이핑 시작
             try? await Task.sleep(nanoseconds: 380_000_000)
             guard !Task.isCancelled else { return }
             for char in alarmDesc {
@@ -330,6 +337,10 @@ struct HomeView: View {
                 guard !Task.isCancelled else { break }
                 typingText.append(char)
             }
+            // 타이핑 완료 후 10초 뒤 자동 숨김
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.5)) { descVisible = false }
         }
     }
 
