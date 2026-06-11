@@ -119,6 +119,8 @@ struct HomeView: View {
                         .onAppear { startTyping() }
                     }
 
+                    Color.clear.frame(height: 116)
+
                     Spacer()
 
                     // ── Debug info ────────────────────────────────────────
