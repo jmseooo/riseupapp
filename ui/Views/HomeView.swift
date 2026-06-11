@@ -99,8 +99,24 @@ struct HomeView: View {
                             .foregroundStyle(Color.rBlackWarm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, DS.hPad)
-                            .padding(.top, 10)
+                            .padding(.top, 2)
                             .transition(.opacity)
+                    }
+
+                    // ── Alarm description ──────────────────────────────────
+                    if !settings.isEnabled && !isPinchExpanded {
+                        ZStack(alignment: .topLeading) {
+                            Text(alarmDesc).opacity(0)
+                            Text(typingText)
+                        }
+                        .font(.prompt(13))
+                        .foregroundStyle(Color.rOrange)
+                        .kerning(-0.13)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 10)
+                        .transition(.opacity)
+                        .onAppear { startTyping() }
                     }
 
                     Spacer()
@@ -266,68 +282,38 @@ struct HomeView: View {
 
     private var alarmCard: some View {
         @Bindable var settings = settings
-        return VStack(alignment: .leading, spacing: 0) {
-            if !settings.isEnabled {
-                ZStack(alignment: .topLeading) {
-                    // 최종 높이 미리 확보 (투명)
-                    Text(alarmDesc)
-                        .opacity(0)
-                    // 타이핑 텍스트
-                    Text(typingText)
-                }
-                .font(.prompt(13))
-                .foregroundStyle(Color.rOrange)
-                .kerning(-0.13)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 14)
-                .transition(.opacity)
-            }
+        return HStack {
+            Text("alarm")
+                .font(.pretendard(15, weight: .semibold))
+                .foregroundStyle(Color.rTextPrimary)
+                .kerning(-0.45)
 
-            HStack {
-                Text("alarm")
-                    .font(.pretendard(15, weight: .semibold))
-                    .foregroundStyle(Color.rTextPrimary)
-                    .kerning(-0.45)
+            Spacer()
 
-                Spacer()
-
-                Toggle("", isOn: $settings.isEnabled)
-                    .labelsHidden()
-                    .tint(Color.rGreenAccent)
-                    .onChange(of: settings.isEnabled) { _, enabled in
-                        Task {
-                            if enabled {
-                                let granted = await NotificationManager.shared.requestAuthorization()
-                                if granted {
-                                    await NotificationManager.shared.scheduleSunriseAlarm()
-                                    BackgroundTaskManager.shared.scheduleNextRefresh()
-                                } else {
-                                    settings.isEnabled = false
-                                }
+            Toggle("", isOn: $settings.isEnabled)
+                .labelsHidden()
+                .tint(Color.rGreenAccent)
+                .onChange(of: settings.isEnabled) { _, enabled in
+                    Task {
+                        if enabled {
+                            let granted = await NotificationManager.shared.requestAuthorization()
+                            if granted {
+                                await NotificationManager.shared.scheduleSunriseAlarm()
+                                BackgroundTaskManager.shared.scheduleNextRefresh()
                             } else {
-                                await NotificationManager.shared.cancelSunriseAlarm()
+                                settings.isEnabled = false
                             }
+                        } else {
+                            await NotificationManager.shared.cancelSunriseAlarm()
+                            startTyping()
                         }
                     }
-            }
+                }
         }
         .padding(20)
         .background(Color.rSurfaceGlass)
         .clipShape(RoundedRectangle(cornerRadius: DS.cardRadius))
         .cardShadow()
-        .clipped()
-        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: settings.isEnabled)
-        .onAppear {
-            if !settings.isEnabled { startTyping() }
-        }
-        .onChange(of: settings.isEnabled) { _, enabled in
-            if !enabled {
-                startTyping()
-            } else {
-                typingTask?.cancel()
-                typingText = ""
-            }
-        }
     }
 
     private func startTyping() {
