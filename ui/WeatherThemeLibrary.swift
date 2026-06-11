@@ -137,10 +137,10 @@ struct WeatherThemeLibrary {
         // 맑은 낮: 선명한 골든 옐로우 + 스카이블루. 새벽보다 뚜렷하게 채도 높음.
         "clear-day": makeTheme("clear-day", angle: 180, bg: "FFF8E0", "FFF0C0", orbs: [
             orb(size: 155, "FFD040", "F0B820"),
-            orb(size:  90, "68C4F8", "48A8F0"),
+            orb(size:  90, "1AACFF", "0090F0"),
             orb(size:  65, "FFB840", "F09820"),
             orb(size:  50, "FFE888", "F8D040"),
-        ], blur: 22, opacity: 0.55, dur: 25, turb: 0.0, count: 4...7),
+        ], blur: 22, opacity: 0.62, dur: 25, turb: 0.0, count: 4...7),
 
         // Warm/cool contrast — slightly faster, subtle turbulence.
         "partly-cloudy": makeTheme("partly-cloudy", angle: 165, bg: "F2F5F9", "E8EDF4", orbs: [
