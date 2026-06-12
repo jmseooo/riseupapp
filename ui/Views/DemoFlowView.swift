@@ -30,7 +30,7 @@ struct DemoFlowView: View {
                 DemoMain { withAnimation(.easeInOut(duration: 0.6)) { step = .wakeup } }
                     .transition(.opacity)
             case .wakeup:
-                WakeUpView { withAnimation(.easeInOut(duration: 0.6)) { step = .onboarding } }
+                DemoWakeUpView { withAnimation(.easeInOut(duration: 0.6)) { step = .onboarding } }
                     .environment(AlarmSettings.shared)
                     .transition(.opacity)
             }
@@ -104,11 +104,11 @@ private struct DemoMain: View {
                 Spacer()
 
                 // 일출 시간
-                VStack(alignment: .leading, spacing: 0) {
-                    GlassTimeTextA(timeString: timeString)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, DS.hPad)
+                Text(timeString)
+                    .font(.pretendard(60, weight: .semibold))
+                    .foregroundStyle(Color.rTextPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, DS.hPad)
 
                 // 카운트다운 + chevron
                 HStack {
@@ -588,6 +588,136 @@ private struct DemoAutoFocusTextField: UIViewRepresentable {
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
             parent.onSubmit(); return true
         }
+    }
+}
+
+// MARK: - DemoWakeUpView
+
+private struct DemoWakeUpView: View {
+    @Environment(AlarmSettings.self) private var settings
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
+    let onWokeUp: () -> Void
+
+    @State private var showAddTodo = false
+    @State private var newTodoText = ""
+
+    var body: some View {
+        ZStack {
+            WeatherThemeBackground(weather: demoWeather, hour: demoHour)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Good morning")
+                    .font(.pretendard(34, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, DS.hPad)
+                    .padding(.top, 72)
+
+                todoSection
+                    .padding(.top, 32)
+
+                Spacer()
+
+                Button {
+                    onWokeUp()
+                } label: {
+                    Text("I woke up")
+                        .font(.pretendard(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DS.btnH)
+                        .background(Color.rOrange)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.bottom, 48)
+            }
+        }
+        .sheet(isPresented: $showAddTodo) { addTodoSheet }
+    }
+
+    private var todoSection: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("TODO")
+                    .font(.prompt(12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .padding(.leading, 10)
+                Spacer()
+                Button { showAddTodo = true } label: {
+                    Text("add")
+                        .font(.prompt(12))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.18))
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, DS.hPad)
+
+            VStack(spacing: 0) {
+                ForEach(todos) { item in
+                    HStack(spacing: 14) {
+                        Button { item.isDone.toggle() } label: {
+                            ZStack {
+                                Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1).frame(width: 22, height: 22)
+                                if item.isDone {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                        }
+                        Text(item.text)
+                            .font(.pretendard(16, weight: .medium))
+                            .foregroundStyle(item.isDone ? .white.opacity(0.40) : .white)
+                            .strikethrough(item.isDone, color: .white.opacity(0.40))
+                        Spacer()
+                    }
+                    .padding(.vertical, 14)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(.white.opacity(0.12)).frame(height: 1)
+                    }
+                }
+            }
+            .padding(.horizontal, DS.hPad)
+            .padding(.top, 16)
+        }
+    }
+
+    private var addTodoSheet: some View {
+        VStack(spacing: 20) {
+            Text("새 할 일")
+                .font(.pretendard(17, weight: .semibold))
+                .foregroundStyle(Color.rBlackWarm)
+                .padding(.top, 24)
+            TextField("할 일을 입력하세요", text: $newTodoText)
+                .font(.pretendard(16))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color.white.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, DS.hPad)
+            Button {
+                let t = newTodoText.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty { modelContext.insert(TodoItem(text: t)); newTodoText = "" }
+                showAddTodo = false
+            } label: {
+                Text("추가")
+                    .font(.pretendard(17, weight: .semibold))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: DS.btnH)
+                    .background(Color.rGreenBright)
+                    .clipShape(Capsule())
+            }
+            .padding(.horizontal, DS.hPad)
+            Spacer()
+        }
+        .presentationDetents([.height(260)])
+        .presentationDragIndicator(.visible)
+        .background(Color.rCream.ignoresSafeArea())
     }
 }
 
