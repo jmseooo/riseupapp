@@ -59,9 +59,9 @@ private struct DemoOnboarding: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            OnboardingView(alwaysShowDialog: true)
 
-            // 다음 버튼
+            // 발표자용 스킵 버튼
             VStack {
                 Spacer()
                 DemoNextButton(label: "메인으로 →", action: onNext)
