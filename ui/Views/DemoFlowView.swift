@@ -179,6 +179,21 @@ private struct DemoMain: View {
             // 알람 카드 + 하단 nav
             if !isPinchExpanded {
             VStack(spacing: 0) {
+                // 알람 울림 버튼
+                Button(action: onAlarm) {
+                    Text("알람 울림 →")
+                        .font(.pretendard(14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color.rSurfaceGlass)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 1))
+                }
+                .padding(.horizontal, DS.hPad)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.bottom, 10)
+
                 // 알람 카드
                 HStack {
                     Text("alarm")
@@ -238,10 +253,6 @@ private struct DemoMain: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showAppSettings) { AppSettingsView() }
         } // NavigationStack
-        .overlay(alignment: .bottom) {
-            DemoNextButton(label: "알람 울림 →", action: onAlarm)
-                .padding(.bottom, 140)
-        }
         .overlay(alignment: .trailing) {
             if isPinchExpanded {
                 dotStrip
