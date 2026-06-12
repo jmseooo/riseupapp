@@ -62,20 +62,6 @@ struct HomeView: View {
                                 }
                             }
 
-                        // reset 버튼 — 시간 텍스트 바로 아래
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                settings.offsetMinutes = 0
-                            }
-                        } label: {
-                            Text("reset")
-                                .font(.pretendard(17, weight: .semibold))
-                                .foregroundStyle(Color.rTextSub)
-                        }
-                        .opacity(settings.offsetMinutes != 0 ? 1 : 0)
-                        .disabled(settings.offsetMinutes == 0)
-                        .animation(.easeInOut(duration: 0.2), value: settings.offsetMinutes != 0)
-                        .padding(.top, 6)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, DS.hPad)
@@ -157,6 +143,7 @@ struct HomeView: View {
                     }
                     .transition(.opacity)
                 }
+
 
                 // ── Pinch dots + drag to offset time (right side) ─────
                 if pinchDotCount > 0 {
@@ -246,6 +233,26 @@ struct HomeView: View {
                         }
                     }
             )
+            .overlay(alignment: .bottom) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        settings.offsetMinutes = 0
+                    }
+                } label: {
+                    Text("reset")
+                        .font(.pretendard(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DS.btnH)
+                        .background(Color.rBlackWarm)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.bottom, 48)
+                .opacity(isPinchExpanded && settings.offsetMinutes != 0 ? 1 : 0)
+                .allowsHitTesting(isPinchExpanded && settings.offsetMinutes != 0)
+                .animation(.easeInOut(duration: 0.25), value: settings.offsetMinutes)
+            }
             .onReceive(ticker) { now = $0 }
             .sheet(isPresented: $showAppSettings) {
                 AppSettingsView()
