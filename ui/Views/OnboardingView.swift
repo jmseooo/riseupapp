@@ -1,51 +1,44 @@
 import SwiftUI
-import CoreLocation
 
 struct OnboardingView: View {
-    private let locationManager = LocationManager.shared
+    @State private var typingText = ""
+    @State private var typingTask: Task<Void, Never>? = nil
+
+    private let subtitle = "Embracing a natural circadian rhythm guided by\nthe sun's movement."
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            WeatherBackground(condition: .sunrise)
+        ZStack {
+            Color.white.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Hello.")
-                    .font(.pretendard(30, weight: .semibold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 30)
-                    .padding(.top, 98)
+            VStack(spacing: 10) {
+                Text("SUNERS")
+                    .font(.pretendard(42, weight: .heavy))
+                    .foregroundStyle(Color.rOrange)
+                    .tracking(0.84)
 
-                Spacer()
-
-                Text("RiseUp")
-                    .font(.pretendard(84, weight: .bold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 57)
-                    .padding(.bottom, 122)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .ignoresSafeArea()
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                if locationManager.authorizationStatus == .notDetermined {
-                    locationManager.requestPermission()
-                } else {
-                    requestNotificationThenFinish()
+                ZStack(alignment: .top) {
+                    Text(subtitle).opacity(0)
+                    Text(typingText)
                 }
+                .font(.pretendard(12))
+                .foregroundStyle(Color.rOrange)
+                .tracking(0.24)
+                .multilineTextAlignment(.center)
             }
         }
-        .onChange(of: locationManager.authorizationStatus) { (_, status: CLAuthorizationStatus) in
-            if status != .notDetermined {
-                requestNotificationThenFinish()
-            }
-        }
+        .onAppear { startTyping() }
     }
 
-    private func requestNotificationThenFinish() {
-        Task { @MainActor in
-            AlarmSettings.shared.hasCompletedOnboarding = true
-            _ = await NotificationManager.shared.requestAuthorization()
+    private func startTyping() {
+        typingTask?.cancel()
+        typingText = ""
+        typingTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            for char in subtitle {
+                guard !Task.isCancelled else { break }
+                try? await Task.sleep(nanoseconds: 30_000_000)
+                typingText.append(char)
+            }
         }
     }
 }
