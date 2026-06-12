@@ -95,7 +95,7 @@ struct HomeView: View {
                     }
 
                     // ── Alarm description ──────────────────────────────────
-                    if !settings.isEnabled && !isPinchExpanded && descVisible {
+                    if !isPinchExpanded && descVisible {
                         ZStack(alignment: .topLeading) {
                             Text(alarmDesc).opacity(0)
                             Text(typingText)
