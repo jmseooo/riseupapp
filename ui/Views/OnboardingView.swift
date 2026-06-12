@@ -221,7 +221,7 @@ struct OnboardingView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Spacer().frame(height: 89)
 
-                    Text("Begin your day with SUNNERS.")
+                    Text("Begin your day with SUNERS.")
                         .font(.pretendard(18, weight: .medium))
                         .foregroundStyle(.black)
                         .padding(.leading, 24)
