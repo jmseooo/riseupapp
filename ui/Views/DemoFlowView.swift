@@ -594,7 +594,7 @@ private struct DemoTodoView: View {
                 .padding(.top, 16)
 
                 Button { if isAdding { saveAndExit() } else { isAdding = true } } label: {
-                    Text("추가")
+                    Text("add")
                         .font(.pretendard(17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -609,6 +609,7 @@ private struct DemoTodoView: View {
         .toolbar(.hidden, for: .navigationBar)
         .ignoresSafeArea()
         .background(SwipeBackEnabler())
+        .onAppear { isAdding = true }
     }
 
     private var inlineAddRow: some View {
