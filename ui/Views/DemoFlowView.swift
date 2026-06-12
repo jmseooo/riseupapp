@@ -249,7 +249,7 @@ private struct DemoMain: View {
             }
         }
         .overlay(alignment: .bottom) {
-            if isPinchExpanded && settings.offsetMinutes != 0 {
+            if isPinchExpanded {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         settings.offsetMinutes = 0
