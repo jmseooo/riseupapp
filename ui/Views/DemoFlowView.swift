@@ -30,9 +30,12 @@ struct DemoFlowView: View {
                 DemoMain { withAnimation(.easeInOut(duration: 0.6)) { step = .wakeup } }
                     .transition(.opacity)
             case .wakeup:
-                DemoWakeUpView { withAnimation(.easeInOut(duration: 0.6)) { step = .onboarding } }
-                    .environment(AlarmSettings.shared)
-                    .transition(.opacity)
+                DemoWakeUpView(
+                    onBack:   { withAnimation(.easeInOut(duration: 0.6)) { step = .main } },
+                    onWokeUp: { withAnimation(.easeInOut(duration: 0.6)) { step = .onboarding } }
+                )
+                .environment(AlarmSettings.shared)
+                .transition(.opacity)
             }
         }
         .ignoresSafeArea()
@@ -597,9 +600,10 @@ private struct DemoWakeUpView: View {
     @Environment(AlarmSettings.self) private var settings
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
+    let onBack: () -> Void
     let onWokeUp: () -> Void
 
-    @State private var showAddTodo = false
+    @State private var isAdding = false
     @State private var newTodoText = ""
 
     var body: some View {
@@ -607,11 +611,20 @@ private struct DemoWakeUpView: View {
             WeatherThemeBackground(weather: demoWeather, hour: demoHour)
 
             VStack(alignment: .leading, spacing: 0) {
+                // 뒤로가기 chevron
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Color.rTextPrimary)
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.top, 60)
+
                 Text("Good morning")
                     .font(.pretendard(34, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.rTextPrimary)
                     .padding(.horizontal, DS.hPad)
-                    .padding(.top, 72)
+                    .padding(.top, 96)
 
                 todoSection
                     .padding(.top, 32)
@@ -633,7 +646,6 @@ private struct DemoWakeUpView: View {
                 .padding(.bottom, 48)
             }
         }
-        .sheet(isPresented: $showAddTodo) { addTodoSheet }
     }
 
     private var todoSection: some View {
@@ -641,16 +653,18 @@ private struct DemoWakeUpView: View {
             HStack {
                 Text("TODO")
                     .font(.prompt(12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.rTextSub)
                     .padding(.leading, 10)
                 Spacer()
-                Button { showAddTodo = true } label: {
+                Button {
+                    if isAdding { saveTodo() } else { isAdding = true }
+                } label: {
                     Text("add")
                         .font(.prompt(12))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.rTextPrimary)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
-                        .background(Color.white.opacity(0.18))
+                        .background(Color.rTextPrimary.opacity(0.08))
                         .clipShape(Capsule())
                 }
             }
@@ -661,23 +675,39 @@ private struct DemoWakeUpView: View {
                     HStack(spacing: 14) {
                         Button { item.isDone.toggle() } label: {
                             ZStack {
-                                Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1).frame(width: 22, height: 22)
+                                Circle().strokeBorder(Color.rTextSub, lineWidth: 1).frame(width: 22, height: 22)
                                 if item.isDone {
                                     Image(systemName: "checkmark")
                                         .font(.system(size: 10, weight: .semibold))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(Color.rTextPrimary)
                                 }
                             }
                         }
                         Text(item.text)
                             .font(.pretendard(16, weight: .medium))
-                            .foregroundStyle(item.isDone ? .white.opacity(0.40) : .white)
-                            .strikethrough(item.isDone, color: .white.opacity(0.40))
+                            .foregroundStyle(item.isDone ? Color.rTextSub : Color.rTextPrimary)
+                            .strikethrough(item.isDone, color: Color.rTextSub)
                         Spacer()
                     }
                     .padding(.vertical, 14)
                     .overlay(alignment: .bottom) {
-                        Rectangle().fill(.white.opacity(0.12)).frame(height: 1)
+                        Rectangle().fill(Color.rTextPrimary.opacity(0.10)).frame(height: 1)
+                    }
+                }
+                if isAdding {
+                    HStack(spacing: 14) {
+                        Circle().strokeBorder(Color.rTextSub, lineWidth: 1).frame(width: 22, height: 22)
+                        DemoAutoFocusTextField(
+                            text: $newTodoText,
+                            placeholder: "할 일을 입력하세요",
+                            onSubmit: saveTodo
+                        )
+                        .frame(height: 50)
+                        Spacer()
+                    }
+                    .padding(.vertical, 14)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Color.rTextPrimary.opacity(0.10)).frame(height: 1)
                     }
                 }
             }
@@ -686,39 +716,12 @@ private struct DemoWakeUpView: View {
         }
     }
 
-    private var addTodoSheet: some View {
-        VStack(spacing: 20) {
-            Text("새 할 일")
-                .font(.pretendard(17, weight: .semibold))
-                .foregroundStyle(Color.rBlackWarm)
-                .padding(.top, 24)
-            TextField("할 일을 입력하세요", text: $newTodoText)
-                .font(.pretendard(16))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color.white.opacity(0.8))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal, DS.hPad)
-            Button {
-                let t = newTodoText.trimmingCharacters(in: .whitespaces)
-                if !t.isEmpty { modelContext.insert(TodoItem(text: t)); newTodoText = "" }
-                showAddTodo = false
-            } label: {
-                Text("추가")
-                    .font(.pretendard(17, weight: .semibold))
-                    .foregroundStyle(.black)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: DS.btnH)
-                    .background(Color.rGreenBright)
-                    .clipShape(Capsule())
-            }
-            .padding(.horizontal, DS.hPad)
-            Spacer()
-        }
-        .presentationDetents([.height(260)])
-        .presentationDragIndicator(.visible)
-        .background(Color.rCream.ignoresSafeArea())
+    private func saveTodo() {
+        let trimmed = newTodoText.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty { modelContext.insert(TodoItem(text: trimmed)); newTodoText = "" }
+        isAdding = false
     }
+
 }
 
 // MARK: - Preview

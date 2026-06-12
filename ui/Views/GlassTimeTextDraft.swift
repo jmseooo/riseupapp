@@ -5,6 +5,12 @@ struct GlassTimeTextDraft: View {
     let timeString: String
     @State private var globalOffset: CGPoint = .zero
 
+    private var screenSize: CGSize {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.screen.bounds.size ?? CGSize(width: 390, height: 844)
+    }
+
     var body: some View {
         Text(timeString)
             .font(.akiraExpanded(110))
@@ -23,8 +29,8 @@ struct GlassTimeTextDraft: View {
                     Canvas { ctx, size in
 
                         let t   = tl.date.timeIntervalSinceReferenceDate
-                        let sw  = UIScreen.main.bounds.width
-                        let sh  = UIScreen.main.bounds.height
+                        let sw  = screenSize.width
+                        let sh  = screenSize.height
                         let mid = CGPoint(x: size.width / 2, y: size.height / 2)
 
                         let resolved = ctx.resolve(

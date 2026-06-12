@@ -45,7 +45,7 @@ struct OnboardingView: View {
     private func requestNotificationThenFinish() {
         Task { @MainActor in
             AlarmSettings.shared.hasCompletedOnboarding = true
-            await NotificationManager.shared.requestAuthorization()
+            _ = await NotificationManager.shared.requestAuthorization()
         }
     }
 }
