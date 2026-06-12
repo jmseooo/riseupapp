@@ -406,15 +406,9 @@ struct OnboardingView: View {
             guard !notificationDialogTriggered else { return }
             notificationDialogTriggered = true
             UNUserNotificationCenter.current().getNotificationSettings { settings in
-                DispatchQueue.main.async {
-                    if !alwaysShowDialog && settings.authorizationStatus != .notDetermined {
-                        // 이미 결정된 권한 → 즉시 건너뜀
-                        withAnimation(.easeInOut(duration: 0.5)) { step = .welcome }
-                    } else {
-                        // 미결정이거나 데모 → 0.5초 후 다이얼로그
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            showDialog = true
-                        }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if alwaysShowDialog || settings.authorizationStatus == .notDetermined {
+                        showDialog = true
                     }
                 }
             }
@@ -446,11 +440,13 @@ struct OnboardingView: View {
                 dialogButton("Allow Once") {
                     showDialog = false
                     if !alwaysShowDialog { locationManager.requestPermission() }
+                    withAnimation(.easeInOut(duration: 0.5)) { step = .notification }
                 }
                 Divider()
                 dialogButton("Allow While Using the App") {
                     showDialog = false
                     if !alwaysShowDialog { locationManager.requestPermission() }
+                    withAnimation(.easeInOut(duration: 0.5)) { step = .notification }
                 }
                 Divider()
                 dialogButton("Don't Allow") {
@@ -490,6 +486,7 @@ struct OnboardingView: View {
                     if !alwaysShowDialog {
                         Task { _ = await NotificationManager.shared.requestAuthorization() }
                     }
+                    withAnimation(.easeInOut(duration: 0.5)) { step = .welcome }
                 }
             }
         }
