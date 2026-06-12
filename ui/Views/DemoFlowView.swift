@@ -4,6 +4,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 // 데모 전용 고정 배경값 — 날씨 fetch 없이 항상 동일한 색상 유지
 private let demoWeather = WeatherData(temperature: 22, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 10)
@@ -69,6 +70,9 @@ private struct DemoMain: View {
     @Environment(AlarmSettings.self) private var settings
     @State private var alarmOn = false
     @State private var showAppSettings = false
+    @State private var isPinchExpanded = false
+    @State private var pinchDotCount: Int = 0
+    @State private var dragStartOffset: Int? = nil
 
     @State private var typingText: String = ""
     @State private var typingTask: Task<Void, Never>? = nil
@@ -82,83 +86,98 @@ private struct DemoMain: View {
 
             VStack(spacing: 0) {
                 // 날씨 row
-                HStack(alignment: .center) {
-                    HStack(alignment: .top, spacing: 0) {
-                        Text("\(Int(demoWeather.temperature.rounded()))")
-                            .font(.rajdhani(18))
-                            .foregroundStyle(Color.rTextPrimary)
-                        Text("°")
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundStyle(Color.rTextPrimary)
+                if !isPinchExpanded {
+                    HStack(alignment: .center) {
+                        HStack(alignment: .top, spacing: 0) {
+                            Text("\(Int(demoWeather.temperature.rounded()))")
+                                .font(.rajdhani(18))
+                                .foregroundStyle(Color.rTextPrimary)
+                            Text("°")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundStyle(Color.rTextPrimary)
+                        }
+                        Spacer()
+                        HStack(spacing: 6) {
+                            Image(systemName: "sun.max.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(Color.rTextPrimary)
+                            Text("Good Morning")
+                                .font(.prompt(18, weight: .semiBold))
+                                .foregroundStyle(Color.rTextPrimary)
+                        }
                     }
-                    Spacer()
-                    HStack(spacing: 6) {
-                        Image(systemName: "sun.max.fill")
-                            .font(.system(size: 22))
-                            .foregroundStyle(Color.rTextPrimary)
-                        Text("Good Morning")
-                            .font(.prompt(18, weight: .semiBold))
-                            .foregroundStyle(Color.rTextPrimary)
-                    }
+                    .padding(.horizontal, DS.hPad)
+                    .padding(.top, 60)
+                    .transition(.opacity)
                 }
-                .padding(.horizontal, DS.hPad)
-                .padding(.top, 60)
 
                 Spacer()
 
-                // 일출 시간
+                // 일출 시간 (탭으로 핀치 뷰 토글)
                 Text(timeString)
                     .font(.pretendard(60, weight: .semibold))
                     .foregroundStyle(Color.rTextPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, DS.hPad)
+                    .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .topLeading)
+                    .offset(y: isPinchExpanded ? -25 : 0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            isPinchExpanded.toggle()
+                        }
+                    }
 
                 // 카운트다운 + chevron
-                HStack {
-                    Text(countdownText)
-                        .font(.prompt(18))
-                        .foregroundStyle(Color.rBlackWarm)
-                    Spacer()
-                    Button {
-                        if descVisible {
-                            typingTask?.cancel()
-                            typingText = ""
-                            withAnimation(.easeOut(duration: 0.3)) { descVisible = false }
-                        } else {
-                            startTyping()
+                if !isPinchExpanded {
+                    HStack {
+                        Text(countdownText)
+                            .font(.prompt(18))
+                            .foregroundStyle(Color.rBlackWarm)
+                        Spacer()
+                        Button {
+                            if descVisible {
+                                typingTask?.cancel()
+                                typingText = ""
+                                withAnimation(.easeOut(duration: 0.3)) { descVisible = false }
+                            } else {
+                                startTyping()
+                            }
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.rTextPrimary)
                         }
-                    } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color.rTextPrimary)
                     }
-                }
-                .padding(.horizontal, DS.hPad)
-                .padding(.top, 2)
-
-                // 알람 설명 텍스트 (타이핑 애니메이션)
-                if !alarmOn && descVisible {
-                    ZStack(alignment: .topLeading) {
-                        Text(alarmDesc).opacity(0)
-                        Text(typingText)
-                    }
-                    .font(.prompt(13))
-                    .foregroundStyle(Color.rOrange)
-                    .kerning(-0.13)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, DS.hPad)
-                    .padding(.top, 10)
+                    .padding(.top, 2)
                     .transition(.opacity)
+
+                    // 알람 설명 텍스트 (타이핑 애니메이션)
+                    if !alarmOn && descVisible {
+                        ZStack(alignment: .topLeading) {
+                            Text(alarmDesc).opacity(0)
+                            Text(typingText)
+                        }
+                        .font(.prompt(13))
+                        .foregroundStyle(Color.rOrange)
+                        .kerning(-0.13)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 10)
+                        .transition(.opacity)
+                    }
                 }
 
                 Color.clear.frame(height: 116)
                 Spacer()
 
                 // 알람 카드 + 하단 nav 공간 확보
-                Color.clear.frame(height: 140)
+                if !isPinchExpanded { Color.clear.frame(height: 140) }
             }
 
             // 알람 카드 + 하단 nav
+            if !isPinchExpanded {
             VStack(spacing: 0) {
                 // 알람 카드
                 HStack {
@@ -214,6 +233,7 @@ private struct DemoMain: View {
                 .cardShadow()
                 .padding(.bottom, 24)
             }
+            } // if !isPinchExpanded
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showAppSettings) { AppSettingsView() }
@@ -222,9 +242,82 @@ private struct DemoMain: View {
             DemoNextButton(label: "알람 울림 →", action: onAlarm)
                 .padding(.bottom, 140)
         }
+        .overlay(alignment: .trailing) {
+            if isPinchExpanded {
+                dotStrip
+                    .transition(.opacity)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if isPinchExpanded && settings.offsetMinutes != 0 {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        settings.offsetMinutes = 0
+                        pinchDotCount = 7
+                    }
+                } label: {
+                    Text("reset")
+                        .font(.pretendard(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DS.btnH)
+                        .background(Color.rBlackWarm)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.bottom, 48)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
         .onAppear {
             startTyping()
         }
+        .onChange(of: isPinchExpanded) { _, expanded in
+            if expanded {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    pinchDotCount = max(0, min(14, 7 + settings.offsetMinutes / 10))
+                }
+            } else {
+                pinchDotCount = 0
+            }
+        }
+    }
+
+    private var dotStrip: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 24) {
+                ForEach((0..<15).reversed(), id: \.self) { i in
+                    Circle()
+                        .fill(i <= pinchDotCount
+                              ? Color.rTextPrimary
+                              : Color.rTextPrimary.opacity(0.18))
+                        .frame(width: 5, height: 5)
+                        .animation(
+                            .spring(response: 0.2, dampingFraction: 0.6)
+                            .delay(Double(i) * 0.015),
+                            value: pinchDotCount
+                        )
+                }
+            }
+            .padding(.trailing, 22)
+            Spacer()
+        }
+        .frame(width: 60)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { v in
+                    if dragStartOffset == nil { dragStartOffset = settings.offsetMinutes }
+                    let steps = Int(v.translation.height / 40)
+                    let newOffset = max(-70, min(70, (dragStartOffset ?? 0) + steps * 10))
+                    settings.offsetMinutes = newOffset
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                        pinchDotCount = max(0, min(14, 7 + newOffset / 10))
+                    }
+                }
+                .onEnded { _ in dragStartOffset = nil }
+        )
     }
 
     private func startTyping() {
@@ -245,7 +338,11 @@ private struct DemoMain: View {
         }
     }
 
-    private var timeString: String { "5:10" }
+    private var timeString: String {
+        let base = 5 * 60 + 10
+        let total = max(0, min(23 * 60 + 59, base + settings.offsetMinutes))
+        return "\(total / 60):\(String(format: "%02d", total % 60))"
+    }
 
     private var countdownText: String {
         guard let alarm = AlarmSettings.shared.nextAlarmTime else { return "-- h -- m" }
@@ -554,8 +651,6 @@ private struct DemoTodoView: View {
 }
 
 // MARK: - DemoAutoFocusTextField
-
-import UIKit
 
 private struct DemoAutoFocusTextField: UIViewRepresentable {
     @Binding var text: String
