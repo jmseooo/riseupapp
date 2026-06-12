@@ -5,6 +5,7 @@ import UserNotifications
 
 struct OnboardingView: View {
     var alwaysShowDialog: Bool = false
+    var onComplete: (() -> Void)? = nil
     private let locationManager = LocationManager.shared
 
     private enum Step {
@@ -250,6 +251,7 @@ struct OnboardingView: View {
                         if !alwaysShowDialog {
                             AlarmSettings.shared.hasCompletedOnboarding = true
                         }
+                        onComplete?()
                     } label: {
                         Text("Start")
                             .font(.pretendard(16, weight: .semibold))

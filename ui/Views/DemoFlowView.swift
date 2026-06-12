@@ -59,7 +59,7 @@ private struct DemoOnboarding: View {
 
     var body: some View {
         ZStack {
-            OnboardingView(alwaysShowDialog: true)
+            OnboardingView(alwaysShowDialog: true, onComplete: onNext)
 
             // 발표자용 스킵 버튼
             VStack {
