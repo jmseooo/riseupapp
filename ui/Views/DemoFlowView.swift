@@ -28,12 +28,21 @@ struct DemoFlowView: View {
                 DemoOnboarding { withAnimation(.easeInOut(duration: 0.6)) { step = .main } }
                     .transition(.opacity)
             case .main:
-                DemoMain { withAnimation(.easeInOut(duration: 0.6)) { step = .wakeup } }
-                    .transition(.opacity)
+                DemoMain {
+                    AlarmAudioPlayer.shared.play()
+                    withAnimation(.easeInOut(duration: 0.6)) { step = .wakeup }
+                }
+                .transition(.opacity)
             case .wakeup:
                 DemoWakeUpView(
-                    onBack:   { withAnimation(.easeInOut(duration: 0.6)) { step = .main } },
-                    onWokeUp: { withAnimation(.easeInOut(duration: 0.6)) { step = .main } }
+                    onBack: {
+                        AlarmAudioPlayer.shared.stop()
+                        withAnimation(.easeInOut(duration: 0.6)) { step = .main }
+                    },
+                    onWokeUp: {
+                        AlarmAudioPlayer.shared.stop()
+                        withAnimation(.easeInOut(duration: 0.6)) { step = .main }
+                    }
                 )
                 .environment(AlarmSettings.shared)
                 .transition(.opacity)
