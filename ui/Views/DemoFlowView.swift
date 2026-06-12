@@ -3,6 +3,7 @@
 // 프로덕션 코드와 무관. 기존 코드에 영향 없음.
 
 import SwiftUI
+import SwiftData
 
 // 데모 전용 고정 배경값 — 날씨 fetch 없이 항상 동일한 색상 유지
 private let demoWeather = WeatherData(temperature: 22, weatherCode: 0, windSpeed: 5, humidity: 40, cloudCover: 10)
@@ -184,14 +185,14 @@ private struct DemoMain: View {
                 // 하단 nav
                 HStack(spacing: 24) {
                     NavigationLink {
-                        PersonalView().environment(settings)
+                        DemoPersonalView().environment(settings)
                     } label: {
                         Image(systemName: "sun.min.fill")
                             .font(.system(size: 20, weight: .medium))
                             .foregroundStyle(Color.rBlackWarm)
                     }
                     NavigationLink {
-                        TodoView().environment(settings)
+                        DemoTodoView().environment(settings)
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 20, weight: .medium))
@@ -270,6 +271,322 @@ private struct DemoNextButton: View {
                 .background(.black.opacity(0.35))
                 .clipShape(Capsule())
                 .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 1))
+        }
+    }
+}
+
+// MARK: - DemoPersonalView
+
+private struct DemoPersonalView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AlarmSettings.self) private var settings
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.white.ignoresSafeArea()
+            VStack(spacing: 0) {
+                // nav bar
+                ZStack {
+                    Text("record")
+                        .font(.pretendard(17, weight: .semibold))
+                        .foregroundStyle(Color.rBlackWarm)
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image(systemName: "arrow.left")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(Color.rBlackWarm)
+                        }
+                        Spacer()
+                    }
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.top, 30)
+                .padding(.bottom, 16)
+
+                ScrollView(showsIndicators: false) {
+                    calendarCard
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.top, 8)
+                        .padding(.bottom, 48)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .background(SwipeBackEnabler())
+    }
+
+    // MARK: - Calendar
+
+    private var calendarCard: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("My Location")
+                    .font(.prompt(12, weight: .medium))
+                    .foregroundStyle(Color.rTextGray)
+                Text(monthLabel)
+                    .font(.pretendard(30, weight: .semibold))
+                    .foregroundStyle(.black)
+            }
+            VStack(spacing: 16) {
+                ForEach(0..<monthWeeks.count, id: \.self) { i in
+                    weekRow(monthWeeks[i])
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.60))
+        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .cardShadow()
+    }
+
+    private func weekRow(_ days: [DayData?]) -> some View {
+        VStack(spacing: 5) {
+            HStack(spacing: 0) {
+                ForEach(0..<7, id: \.self) { i in
+                    Group {
+                        if let day = days[i], day.sunriseTime != nil {
+                            Text(day.demoTimeLabel)
+                                .font(.prompt(10))
+                                .foregroundStyle(Color.rTextSub)
+                        } else {
+                            Text(" ").font(.prompt(10))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            HStack(spacing: 0) {
+                ForEach(0..<7, id: \.self) { i in
+                    Group {
+                        if let day = days[i] { dayCell(day) }
+                        else { Color.clear.frame(width: 34, height: 34) }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    private func dayCell(_ day: DayData) -> some View {
+        let woke = settings.wokeUp(on: day.date)
+        let demoMarked = day.dayNumber == 1 || day.dayNumber == 3
+        let highlighted = day.isToday || woke || demoMarked
+        return ZStack {
+            if highlighted {
+                Circle()
+                    .fill(Color.rOrange)
+                    .frame(width: 34, height: 34)
+            }
+            Text("\(day.dayNumber)")
+                .font(.pretendard(13, weight: highlighted ? .semibold : .regular))
+                .foregroundStyle(
+                    highlighted ? .white
+                    : day.isPast ? Color.rTextPrimary
+                    : Color.rTextSub
+                )
+        }
+        .frame(width: 34, height: 34)
+    }
+
+    private var monthWeeks: [[DayData?]] {
+        var cal = Calendar.current
+        cal.firstWeekday = 1
+        let today = Date()
+        let comps = cal.dateComponents([.year, .month], from: today)
+        guard let firstOfMonth = cal.date(from: comps) else { return [] }
+        let firstWeekday = cal.component(.weekday, from: firstOfMonth) - 1
+        let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)!.count
+        let totalWeeks = Int(ceil(Double(firstWeekday + daysInMonth) / 7.0))
+        return (0..<totalWeeks).map { w in
+            (0..<7).map { d -> DayData? in
+                let offset = w * 7 + d - firstWeekday
+                guard offset >= 0, offset < daysInMonth,
+                      let date = cal.date(byAdding: .day, value: offset, to: firstOfMonth)
+                else { return nil }
+                let sunrise = SunriseService.sunriseTime(
+                    latitude: settings.latitude, longitude: settings.longitude, date: date)
+                let isToday = cal.isDateInToday(date)
+                let isFuture = date > today && !isToday
+                return DayData(date: date, dayNumber: offset + 1, sunriseTime: sunrise,
+                               isToday: isToday, isPast: !isToday && !isFuture)
+            }
+        }
+    }
+
+    private var monthLabel: String {
+        let f = DateFormatter(); f.dateFormat = "MMMM"
+        return f.string(from: Date())
+    }
+}
+
+extension DayData {
+    var demoTimeLabel: String {
+        guard sunriseTime != nil else { return "" }
+        let minute = (dayNumber * 17 + 3) % 60
+        return String(format: "5:%02d", minute)
+    }
+}
+
+// MARK: - DemoTodoView
+
+private struct DemoTodoView: View {
+    @Environment(AlarmSettings.self) private var settings
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \TodoItem.createdAt) private var todos: [TodoItem]
+
+    @State private var isAdding = false
+    @State private var newTodoText = ""
+
+    var body: some View {
+        ZStack {
+            WeatherThemeBackground(weather: demoWeather, hour: demoHour)
+
+            VStack(spacing: 0) {
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(Color.rTextPrimary)
+                    }
+                    Spacer()
+                    Text("TODO")
+                        .font(.prompt(12, weight: .medium))
+                        .foregroundStyle(Color.rTextPrimary)
+                    Spacer()
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.top, 76)
+
+                List {
+                    ForEach(todos) { item in
+                        todoRow(item: item)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 0, leading: DS.hPad, bottom: 0, trailing: DS.hPad))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) { modelContext.delete(item) } label: {
+                                    Label("삭제", systemImage: "trash")
+                                }
+                            }
+                    }
+                    if isAdding {
+                        inlineAddRow
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 0, leading: DS.hPad, bottom: 0, trailing: DS.hPad))
+                    }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .padding(.top, 16)
+
+                Button { if isAdding { saveAndExit() } else { isAdding = true } } label: {
+                    Text("추가")
+                        .font(.pretendard(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DS.btnH)
+                        .background(Color.rBlackWarm)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, DS.hPad)
+                .padding(.bottom, 48)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .ignoresSafeArea()
+        .background(SwipeBackEnabler())
+    }
+
+    private var inlineAddRow: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .strokeBorder(Color.rTextWarm, lineWidth: 1)
+                .frame(width: 22, height: 22)
+            DemoAutoFocusTextField(
+                text: $newTodoText,
+                placeholder: "할 일을 입력하세요",
+                onSubmit: saveAndExit
+            )
+            .frame(height: 50)
+            Spacer()
+        }
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.rBorder).frame(height: 1)
+        }
+    }
+
+    private func todoRow(item: TodoItem) -> some View {
+        HStack(spacing: 14) {
+            Button { item.isDone.toggle() } label: {
+                ZStack {
+                    Circle().strokeBorder(Color.rTextWarm, lineWidth: 1).frame(width: 22, height: 22)
+                    if item.isDone {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.rBlackWarm)
+                    }
+                }
+            }
+            Text(item.text)
+                .font(.pretendard(16, weight: .medium))
+                .foregroundStyle(item.isDone ? Color.rTextSub : Color.rBlackWarm)
+                .strikethrough(item.isDone, color: Color.rTextSub)
+            Spacer()
+        }
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.rBorder).frame(height: 1)
+        }
+    }
+
+    private func saveAndExit() {
+        let trimmed = newTodoText.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty { modelContext.insert(TodoItem(text: trimmed)); newTodoText = "" }
+        isAdding = false
+    }
+}
+
+// MARK: - DemoAutoFocusTextField
+
+import UIKit
+
+private struct DemoAutoFocusTextField: UIViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let onSubmit: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UITextField {
+        let field = UITextField()
+        field.placeholder = placeholder
+        field.font = UIFont(name: "Pretendard-Medium", size: 16)
+        field.textColor = UIColor(Color.rBlackWarm)
+        field.returnKeyType = .done
+        field.delegate = context.coordinator
+        field.addTarget(context.coordinator, action: #selector(Coordinator.textChanged(_:)), for: .editingChanged)
+        return field
+    }
+
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        if uiView.text != text { uiView.text = text }
+        if !uiView.isFirstResponder {
+            DispatchQueue.main.async { uiView.becomeFirstResponder() }
+        }
+    }
+
+    class Coordinator: NSObject, UITextFieldDelegate {
+        var parent: DemoAutoFocusTextField
+        init(_ parent: DemoAutoFocusTextField) { self.parent = parent }
+
+        @objc func textChanged(_ field: UITextField) { parent.text = field.text ?? "" }
+
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            parent.onSubmit(); return true
         }
     }
 }

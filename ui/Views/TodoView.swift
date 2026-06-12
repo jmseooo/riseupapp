@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 struct TodoView: View {
     @Environment(AlarmSettings.self) private var settings
@@ -10,6 +9,7 @@ struct TodoView: View {
 
     @State private var isAdding = false
     @State private var newTodoText = ""
+    @FocusState private var fieldFocused: Bool
     @State private var hour = Calendar.current.component(.hour, from: Date())
 
     private let weather = WeatherService.shared
@@ -27,12 +27,12 @@ struct TodoView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.rTextPrimary)
                     }
                     Spacer()
                     Text("TODO")
                         .font(.prompt(12, weight: .medium))
-                        .foregroundStyle(Color.rTextGray)
+                        .foregroundStyle(Color.rTextPrimary)
                     Spacer()
                 }
                 .padding(.horizontal, DS.hPad)
@@ -89,12 +89,11 @@ struct TodoView: View {
                 .strokeBorder(Color.rTextWarm, lineWidth: 1)
                 .frame(width: 22, height: 22)
 
-            AutoFocusTextField(
-                text: $newTodoText,
-                placeholder: "할 일을 입력하세요",
-                onSubmit: saveAndExit
-            )
-            .frame(height: 50)
+            TextField("할 일을 입력하세요", text: $newTodoText)
+                .font(.pretendard(16, weight: .medium))
+                .foregroundStyle(Color.rBlackWarm)
+                .focused($fieldFocused)
+                .onSubmit { saveAndExit() }
 
             Spacer()
         }
@@ -103,6 +102,11 @@ struct TodoView: View {
             Rectangle()
                 .fill(Color.rBorder)
                 .frame(height: 1)
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                fieldFocused = true
+            }
         }
     }
 
@@ -149,48 +153,7 @@ struct TodoView: View {
             newTodoText = ""
         }
         isAdding = false
-    }
-}
-
-// MARK: - AutoFocusTextField
-
-private struct AutoFocusTextField: UIViewRepresentable {
-    @Binding var text: String
-    let placeholder: String
-    let onSubmit: () -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    func makeUIView(context: Context) -> UITextField {
-        let field = UITextField()
-        field.placeholder = placeholder
-        field.font = UIFont(name: "Pretendard-Medium", size: 16)
-        field.textColor = UIColor(Color.rBlackWarm)
-        field.returnKeyType = .done
-        field.delegate = context.coordinator
-        field.addTarget(context.coordinator, action: #selector(Coordinator.textChanged(_:)), for: .editingChanged)
-        return field
-    }
-
-    func updateUIView(_ uiView: UITextField, context: Context) {
-        if uiView.text != text { uiView.text = text }
-        if !uiView.isFirstResponder {
-            DispatchQueue.main.async { uiView.becomeFirstResponder() }
-        }
-    }
-
-    class Coordinator: NSObject, UITextFieldDelegate {
-        var parent: AutoFocusTextField
-        init(_ parent: AutoFocusTextField) { self.parent = parent }
-
-        @objc func textChanged(_ field: UITextField) {
-            parent.text = field.text ?? ""
-        }
-
-        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-            parent.onSubmit()
-            return true
-        }
+        fieldFocused = false
     }
 }
 
