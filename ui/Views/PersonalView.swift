@@ -120,12 +120,13 @@ struct PersonalView: View {
 
     private func dayCell(_ day: DayData) -> some View {
         let woke = settings.wokeUp(on: day.date)
-        let highlighted = day.isToday || woke
+        let demoMarked = day.dayNumber == 1 || day.dayNumber == 3
+        let highlighted = day.isToday || woke || demoMarked
 
         return ZStack {
             if highlighted {
                 Circle()
-                    .fill(day.isToday ? Color.rOrange : Color(hex: "#FFB199"))
+                    .fill(day.isToday || demoMarked ? Color.rOrange : Color(hex: "#FFB199"))
                     .frame(width: 34, height: 34)
             }
             Text("\(day.dayNumber)")
@@ -302,10 +303,10 @@ struct DayData: Identifiable {
     let isPast: Bool
 
     var timeLabel: String {
-        guard let t = sunriseTime else { return "" }
-        let f = DateFormatter()
-        f.dateFormat = "H:mm"
-        return f.string(from: t)
+        guard sunriseTime != nil else { return "" }
+        let day = Calendar.current.component(.day, from: date)
+        let minute = (day * 17 + 3) % 60
+        return String(format: "5:%02d", minute)
     }
 
     var sunriseMinutes: CGFloat? {
