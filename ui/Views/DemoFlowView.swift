@@ -32,7 +32,7 @@ struct DemoFlowView: View {
             case .wakeup:
                 DemoWakeUpView(
                     onBack:   { withAnimation(.easeInOut(duration: 0.6)) { step = .main } },
-                    onWokeUp: { withAnimation(.easeInOut(duration: 0.6)) { step = .onboarding } }
+                    onWokeUp: { withAnimation(.easeInOut(duration: 0.6)) { step = .main } }
                 )
                 .environment(AlarmSettings.shared)
                 .transition(.opacity)
