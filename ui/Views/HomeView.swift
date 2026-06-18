@@ -25,29 +25,24 @@ struct HomeView: View {
     @State private var typingText: String = ""
     @State private var typingTask: Task<Void, Never>? = nil
     @State private var descVisible: Bool = false
-    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen. Weather"
+    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen."
 
     private var typingAttributedText: AttributedString {
-        let weatherSuffix = " Weather"
         let legalURL = WeatherService.shared.attribution?.legalPageURL
             ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
-        guard typingText.hasSuffix(weatherSuffix) else {
-            return AttributedString(typingText)
-        }
-        let base = String(typingText.dropLast(weatherSuffix.count))
-        var result = AttributedString(base + " ")
+        var result = AttributedString(typingText)
+        guard typingText == alarmDesc else { return result }
 
-        let config = UIImage.SymbolConfiguration(pointSize: 11, weight: .regular)
-        if let appleImage = UIImage(systemName: "apple.logo", withConfiguration: config) {
-            let attachment = NSTextAttachment(image: appleImage)
-            attachment.bounds = CGRect(x: 0, y: -2, width: 10, height: 11)
-            var logoAttr = AttributedString(NSAttributedString(attachment: attachment))
-            logoAttr.link = legalURL
-            var weatherAttr = AttributedString(" Weather")
-            weatherAttr.link = legalURL
-            return result + logoAttr + weatherAttr
+        if let markImage = WeatherService.shared.attributionMarkImage {
+            let h: CGFloat = 11
+            let w = h * markImage.size.width / markImage.size.height
+            let attachment = NSTextAttachment(image: markImage)
+            attachment.bounds = CGRect(x: 0, y: -2, width: w, height: h)
+            var imageAttr = AttributedString(NSAttributedString(attachment: attachment))
+            imageAttr.link = legalURL
+            return result + AttributedString(" ") + imageAttr
         } else {
-            var link = AttributedString("Weather")
+            var link = AttributedString(" Weather")
             link.link = legalURL
             return result + link
         }
