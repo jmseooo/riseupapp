@@ -1,6 +1,7 @@
 
 import SwiftUI
 import Combine
+import WeatherKit
 
 struct HomeView: View {
     @Environment(AlarmSettings.self) private var settings
@@ -107,6 +108,11 @@ struct HomeView: View {
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
                         .transition(.opacity)
+
+                        weatherAttribution
+                            .padding(.horizontal, DS.hPad)
+                            .padding(.top, 6)
+                            .transition(.opacity)
                     }
 
                     Color.clear.frame(height: 116)
@@ -269,6 +275,35 @@ struct HomeView: View {
                     await NotificationManager.shared.scheduleSunriseAlarm()
                 }
             }
+        }
+    }
+
+    // MARK: - WeatherKit attribution
+
+    private var weatherAttribution: some View {
+        let w = WeatherService.shared
+        let legalURL = w.attribution?.legalPageURL
+            ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+        let markURL = w.attribution?.combinedMarkLightURL
+
+        return HStack(spacing: 4) {
+            Link(destination: legalURL) {
+                HStack(spacing: 4) {
+                    if let markURL {
+                        AsyncImage(url: markURL) { img in
+                            img.resizable().scaledToFit()
+                        } placeholder: {
+                            EmptyView()
+                        }
+                        .frame(height: 10)
+                    } else {
+                        Text("Weather")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            Spacer()
         }
     }
 
