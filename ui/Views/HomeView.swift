@@ -36,14 +36,16 @@ struct HomeView: View {
         }
         let base = String(typingText.dropLast(weatherSuffix.count))
         var result = AttributedString(base + " ")
-        if let markImage = WeatherService.shared.attributionMarkImage {
-            let h: CGFloat = 11
-            let w = h * markImage.size.width / markImage.size.height
-            let attachment = NSTextAttachment(image: markImage)
-            attachment.bounds = CGRect(x: 0, y: -2, width: w, height: h)
-            var imageAttr = AttributedString(NSAttributedString(attachment: attachment))
-            imageAttr.link = legalURL
-            return result + imageAttr
+
+        let config = UIImage.SymbolConfiguration(pointSize: 11, weight: .regular)
+        if let appleImage = UIImage(systemName: "apple.logo", withConfiguration: config) {
+            let attachment = NSTextAttachment(image: appleImage)
+            attachment.bounds = CGRect(x: 0, y: -2, width: 10, height: 11)
+            var logoAttr = AttributedString(NSAttributedString(attachment: attachment))
+            logoAttr.link = legalURL
+            var weatherAttr = AttributedString(" Weather")
+            weatherAttr.link = legalURL
+            return result + logoAttr + weatherAttr
         } else {
             var link = AttributedString("Weather")
             link.link = legalURL

@@ -1,7 +1,6 @@
 import WeatherKit
 import CoreLocation
 import Foundation
-import UIKit
 
 struct WeatherData {
     let temperature: Double  // °C
@@ -22,16 +21,9 @@ final class WeatherService {
     var isLoading = false
     var lastError: String?
     var attribution: WeatherAttribution?
-    var attributionMarkImage: UIImage?
 
     private init() {
-        Task {
-            attribution = try? await WeatherKit.WeatherService.shared.attribution
-            if let url = attribution?.combinedMarkLightURL,
-               let (data, _) = try? await URLSession.shared.data(from: url) {
-                attributionMarkImage = UIImage(data: data)
-            }
-        }
+        Task { attribution = try? await WeatherKit.WeatherService.shared.attribution }
     }
 
     func fetch(latitude: Double, longitude: Double) async {
