@@ -27,26 +27,6 @@ struct HomeView: View {
     @State private var descVisible: Bool = false
     private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen."
 
-    private var typingAttributedText: AttributedString {
-        let legalURL = WeatherService.shared.attribution?.legalPageURL
-            ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
-        var result = AttributedString(typingText)
-        guard typingText == alarmDesc else { return result }
-
-        if let markImage = WeatherService.shared.attributionMarkImage {
-            let h: CGFloat = 11
-            let w = h * markImage.size.width / markImage.size.height
-            let attachment = NSTextAttachment(image: markImage)
-            attachment.bounds = CGRect(x: 0, y: -2, width: w, height: h)
-            var imageAttr = AttributedString(NSAttributedString(attachment: attachment))
-            imageAttr.link = legalURL
-            return result + AttributedString(" ") + imageAttr
-        } else {
-            var link = AttributedString(" Weather")
-            link.link = legalURL
-            return result + link
-        }
-    }
 
     var body: some View {
         NavigationStack {
@@ -120,7 +100,7 @@ struct HomeView: View {
                     if !isPinchExpanded && descVisible {
                         ZStack(alignment: .topLeading) {
                             Text(alarmDesc).opacity(0)
-                            Text(typingAttributedText)
+                            Text(typingText)
                         }
                         .font(.prompt(13))
                         .foregroundStyle(Color.rOrange)
@@ -128,6 +108,21 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
+                        .overlay(alignment: .bottomTrailing) {
+                            if typingText == alarmDesc {
+                                let legalURL = weather.attribution?.legalPageURL
+                                    ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+                                if let markURL = weather.attribution?.combinedMarkLightURL {
+                                    Link(destination: legalURL) {
+                                        AsyncImage(url: markURL) { img in
+                                            img.resizable().scaledToFit()
+                                        } placeholder: { EmptyView() }
+                                        .frame(height: 10)
+                                    }
+                                    .padding(.trailing, DS.hPad)
+                                }
+                            }
+                        }
                         .transition(.opacity)
                     }
 
