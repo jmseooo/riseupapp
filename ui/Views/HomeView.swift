@@ -126,10 +126,14 @@ struct HomeView: View {
                                     let legalURL = weather.attribution?.legalPageURL
                                         ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
                                     Link(destination: legalURL) {
-                                        AsyncImage(url: markURL) { img in
-                                            img.resizable().scaledToFit()
-                                        } placeholder: { EmptyView() }
-                                        .frame(height: 10)
+                                        HStack(spacing: 3) {
+                                            AsyncImage(url: markURL) { img in
+                                                img.resizable().scaledToFit()
+                                            } placeholder: { EmptyView() }
+                                            .frame(height: 10)
+                                            Text("Weather")
+                                                .font(.prompt(11))
+                                        }
                                     }
                                 }
                                 Spacer()
