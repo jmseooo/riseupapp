@@ -25,7 +25,21 @@ struct HomeView: View {
     @State private var typingText: String = ""
     @State private var typingTask: Task<Void, Never>? = nil
     @State private var descVisible: Bool = false
-    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen."
+    private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen. Weather"
+
+    private var typingAttributedText: AttributedString {
+        let weatherSuffix = " Weather"
+        let legalURL = WeatherService.shared.attribution?.legalPageURL
+            ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+        guard typingText.hasSuffix(weatherSuffix) else {
+            return AttributedString(typingText)
+        }
+        let base = String(typingText.dropLast(weatherSuffix.count))
+        var result = AttributedString(base)
+        var link = AttributedString(weatherSuffix)
+        link.link = legalURL
+        return result + link
+    }
 
     var body: some View {
         NavigationStack {
@@ -99,7 +113,7 @@ struct HomeView: View {
                     if !isPinchExpanded && descVisible {
                         ZStack(alignment: .topLeading) {
                             Text(alarmDesc).opacity(0)
-                            Text(typingText)
+                            Text(typingAttributedText)
                         }
                         .font(.prompt(13))
                         .foregroundStyle(Color.rOrange)
@@ -107,10 +121,6 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
-                        .overlay(alignment: .bottomTrailing) {
-                            weatherAttribution
-                                .padding(.trailing, DS.hPad)
-                        }
                         .transition(.opacity)
                     }
 
@@ -274,35 +284,6 @@ struct HomeView: View {
                     await NotificationManager.shared.scheduleSunriseAlarm()
                 }
             }
-        }
-    }
-
-    // MARK: - WeatherKit attribution
-
-    private var weatherAttribution: some View {
-        let w = WeatherService.shared
-        let legalURL = w.attribution?.legalPageURL
-            ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
-        let markURL = w.attribution?.combinedMarkLightURL
-
-        return HStack(spacing: 4) {
-            Link(destination: legalURL) {
-                HStack(spacing: 4) {
-                    if let markURL {
-                        AsyncImage(url: markURL) { img in
-                            img.resizable().scaledToFit()
-                        } placeholder: {
-                            EmptyView()
-                        }
-                        .frame(height: 10)
-                    } else {
-                        Text("Weather")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            Spacer()
         }
     }
 
