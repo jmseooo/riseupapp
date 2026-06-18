@@ -27,6 +27,19 @@ struct HomeView: View {
     @State private var descVisible: Bool = false
     private let alarmDesc = "The alarm rings at sunrise every day. Check tomorrow's sunrise time above. You can adjust the alarm time\nby pinching the screen."
 
+    private var alarmPart1: String { String(alarmDesc.prefix(while: { $0 != "\n" })) }
+    private var alarmPart2: String {
+        guard let idx = alarmDesc.firstIndex(of: "\n") else { return "" }
+        return String(alarmDesc[alarmDesc.index(after: idx)...])
+    }
+    private var typedPart1: String {
+        typingText.count <= alarmPart1.count ? typingText : alarmPart1
+    }
+    private var typedPart2: String {
+        let offset = alarmPart1.count + 1
+        guard typingText.count > offset else { return "" }
+        return String(typingText.suffix(typingText.count - offset))
+    }
 
     var body: some View {
         NavigationStack {
@@ -98,9 +111,29 @@ struct HomeView: View {
 
                     // ── Alarm description ──────────────────────────────────
                     if !isPinchExpanded && descVisible {
-                        ZStack(alignment: .topLeading) {
-                            Text(alarmDesc).opacity(0)
-                            Text(typingText)
+                        VStack(alignment: .leading, spacing: 0) {
+                            ZStack(alignment: .topLeading) {
+                                Text(alarmPart1).opacity(0)
+                                Text(typedPart1)
+                            }
+                            HStack(alignment: .bottom, spacing: 4) {
+                                ZStack(alignment: .topLeading) {
+                                    Text(alarmPart2).opacity(0)
+                                    Text(typedPart2)
+                                }
+                                if typingText == alarmDesc,
+                                   let markURL = weather.attribution?.combinedMarkLightURL {
+                                    let legalURL = weather.attribution?.legalPageURL
+                                        ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+                                    Link(destination: legalURL) {
+                                        AsyncImage(url: markURL) { img in
+                                            img.resizable().scaledToFit()
+                                        } placeholder: { EmptyView() }
+                                        .frame(height: 10)
+                                    }
+                                }
+                                Spacer()
+                            }
                         }
                         .font(.prompt(13))
                         .foregroundStyle(Color.rOrange)
@@ -108,21 +141,6 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
-                        .overlay(alignment: .bottomTrailing) {
-                            if typingText == alarmDesc {
-                                let legalURL = weather.attribution?.legalPageURL
-                                    ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
-                                if let markURL = weather.attribution?.combinedMarkLightURL {
-                                    Link(destination: legalURL) {
-                                        AsyncImage(url: markURL) { img in
-                                            img.resizable().scaledToFit()
-                                        } placeholder: { EmptyView() }
-                                        .frame(height: 10)
-                                    }
-                                    .padding(.trailing, DS.hPad)
-                                }
-                            }
-                        }
                         .transition(.opacity)
                     }
 
