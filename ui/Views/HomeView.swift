@@ -98,14 +98,8 @@ struct HomeView: View {
                     // ── Alarm description ──────────────────────────────────
                     if !isPinchExpanded && descVisible {
                         ZStack(alignment: .topLeading) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(alarmDesc).opacity(0)
-                                weatherAttribution.opacity(0)
-                            }
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(typingText)
-                                weatherAttribution
-                            }
+                            Text(alarmDesc).opacity(0)
+                            Text(typingText)
                         }
                         .font(.prompt(13))
                         .foregroundStyle(Color.rOrange)
@@ -113,6 +107,10 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, DS.hPad)
                         .padding(.top, 10)
+                        .overlay(alignment: .bottomTrailing) {
+                            weatherAttribution
+                                .padding(.trailing, DS.hPad)
+                        }
                         .transition(.opacity)
                     }
 
