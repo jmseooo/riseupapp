@@ -127,7 +127,10 @@ struct HomeView: View {
                                         ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
                                     Link(destination: legalURL) {
                                         AsyncImage(url: markURL) { img in
-                                            img.resizable().scaledToFit()
+                                            img.renderingMode(.template)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .foregroundStyle(Color.rOrange)
                                         } placeholder: { EmptyView() }
                                         .frame(height: 10)
                                     }
