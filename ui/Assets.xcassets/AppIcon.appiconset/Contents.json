@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "suners.png",
+      "filename" : "sunersicon.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "suners 1.png",
+      "filename" : "sunersicon 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "suners 2.png",
+      "filename" : "sunersicon 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
