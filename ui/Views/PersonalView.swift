@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WeatherKit
 
 struct PersonalView: View {
     @Environment(\.dismiss) private var dismiss
@@ -23,7 +24,10 @@ struct PersonalView: View {
                             .padding(.horizontal, DS.hPad)
                     }
                     .padding(.top, 8)
-                    .padding(.bottom, 48)
+
+                    weatherAttribution
+                        .padding(.top, 16)
+                        .padding(.bottom, 48)
                 }
             }
         }
@@ -31,6 +35,36 @@ struct PersonalView: View {
         .background(SwipeBackEnabler())
         .sheet(isPresented: $showAddTodo) {
             addTodoSheet
+        }
+    }
+
+    // MARK: - WeatherKit attribution
+
+    private var weatherAttribution: some View {
+        let weather = WeatherService.shared
+        let legalURL = weather.attribution?.legalPageURL
+            ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+        let markURL = weather.attribution?.combinedMarkLightURL
+
+        return HStack(spacing: 4) {
+            Spacer()
+            Link(destination: legalURL) {
+                HStack(spacing: 4) {
+                    if let markURL {
+                        AsyncImage(url: markURL) { img in
+                            img.resizable().scaledToFit()
+                        } placeholder: {
+                            EmptyView()
+                        }
+                        .frame(height: 12)
+                    } else {
+                        Text("Weather")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            Spacer()
         }
     }
 

@@ -20,8 +20,11 @@ final class WeatherService {
     var utcOffsetSeconds: Int?
     var isLoading = false
     var lastError: String?
+    var attribution: WeatherAttribution?
 
-    private init() {}
+    private init() {
+        Task { attribution = try? await WeatherKit.WeatherService.shared.attribution }
+    }
 
     func fetch(latitude: Double, longitude: Double) async {
         isLoading = true
