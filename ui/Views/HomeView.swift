@@ -6,6 +6,9 @@ struct HomeView: View {
     @Environment(AlarmSettings.self) private var settings
     @State private var now = Date()
     private let weather = WeatherService.shared
+    #if DEBUG
+    private let wkDebug = DebugWeatherKitService.shared
+    #endif
 
     private let ticker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -137,15 +140,18 @@ struct HomeView: View {
                     Spacer()
 
                     // ── Debug info ────────────────────────────────────────
-                    #if targetEnvironment(simulator)
+                    #if DEBUG
                     if !isPinchExpanded {
-                        Text(debugInfo)
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, DS.hPad)
-                            .padding(.bottom, 8)
-                            .transition(.opacity)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(debugInfo)
+                            Text(debugInfoWeatherKit)
+                        }
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, DS.hPad)
+                        .padding(.bottom, 8)
+                        .transition(.opacity)
                     }
                     #endif
 
@@ -286,6 +292,9 @@ struct HomeView: View {
             .task {
                 LocationManager.shared.updateLocation()
                 await WeatherService.shared.fetch(latitude: settings.latitude, longitude: settings.longitude)
+                #if DEBUG
+                await wkDebug.fetch(latitude: settings.latitude, longitude: settings.longitude)
+                #endif
                 guard settings.isEnabled else { return }
                 let pending = await NotificationManager.shared.pendingSunriseAlarm()
                 if pending == nil {
@@ -433,8 +442,23 @@ struct HomeView: View {
         let lat = String(format: "%.2f", settings.latitude)
         let lon = String(format: "%.2f", settings.longitude)
         let errStr = weather.lastError.map { "ERR:\($0)" } ?? ""
-        return "일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))  \(errStr)"
+        return "[Open-Meteo]  일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(dateStr)  (\(lat), \(lon))  \(errStr)"
     }
+
+    #if DEBUG
+    private var debugInfoWeatherKit: String {
+        let tf = DateFormatter()
+        tf.dateFormat = "H:mm"
+        tf.timeZone = settings.locationTimezone
+
+        let sunriseStr = wkDebug.sunriseToday.map { tf.string(from: $0) } ?? "--:--"
+        let tempStr  = wkDebug.temperature.map  { "\(Int($0.rounded()))°C" } ?? "--°C"
+        let codeStr  = wkDebug.weatherCode.map  { "WMO:\($0)" } ?? "WMO:--"
+        let cloudStr = wkDebug.cloudCover.map   { "cloud:\($0)%" } ?? "cloud:--"
+        let errStr   = wkDebug.lastError.map    { "ERR:\($0)" } ?? ""
+        return "[WeatherKit]  일출 \(sunriseStr)  \(tempStr)  \(codeStr)  \(cloudStr)  \(errStr)"
+    }
+    #endif
 
     private var timeString: String {
         guard let sunrise = settings.nextSunriseTime else { return "--:--" }
