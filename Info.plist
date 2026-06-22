@@ -6,6 +6,8 @@
 	<array>
 		<string>terry.ui.sunrise-refresh</string>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>suners</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,8 +24,6 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>일출 시간 계산을 위해 현재 위치가 필요합니다. 위치 정보는 기기 내부에만 저장됩니다.</string>
-	<key>NSWeatherKitUsageDescription</key>
-	<string>현재 날씨와 일출 시간을 가져오기 위해 WeatherKit을 사용합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Akira Expanded Demo.otf</string>

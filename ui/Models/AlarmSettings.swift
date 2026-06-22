@@ -68,7 +68,6 @@ final class AlarmSettings {
         return SunriseService.sunriseTime(latitude: latitude, longitude: longitude, date: utcNoon(year: y, month: m, day: d))
     }
 
-    // WeatherKit 우선, 없으면 NOAA 계산 fallback
     var nextSunriseTime: Date? {
         let now = Date()
         let svc = WeatherService.shared

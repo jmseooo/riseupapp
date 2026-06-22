@@ -1,7 +1,6 @@
 
 import SwiftUI
 import Combine
-import WeatherKit
 
 struct HomeView: View {
     @Environment(AlarmSettings.self) private var settings
@@ -120,20 +119,6 @@ struct HomeView: View {
                                 ZStack(alignment: .topLeading) {
                                     Text(alarmPart2).opacity(0)
                                     Text(typedPart2)
-                                }
-                                if typingText == alarmDesc,
-                                   let markURL = weather.attribution?.combinedMarkLightURL {
-                                    let legalURL = weather.attribution?.legalPageURL
-                                        ?? URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
-                                    Link(destination: legalURL) {
-                                        AsyncImage(url: markURL) { img in
-                                            img.renderingMode(.template)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .foregroundStyle(Color.rOrange)
-                                        } placeholder: { EmptyView() }
-                                        .frame(height: 10)
-                                    }
                                 }
                                 Spacer()
                             }
