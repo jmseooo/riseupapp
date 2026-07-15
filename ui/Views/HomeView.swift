@@ -69,7 +69,7 @@ struct HomeView: View {
 
                     // ── Sunrise time ───────────────────────────────────────
                     VStack(alignment: .leading, spacing: 0) {
-                        GlassTimeTextA(timeString: timeString)
+                        GlassTimeTextA(timeString: timeString, isDark: isDarkBackground)
                             .offset(x: wobble, y: floatY)
                             .scaleEffect(isPinchExpanded ? 1.5 : 1.0, anchor: .topLeading)
                             .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isPinchExpanded)
@@ -90,7 +90,7 @@ struct HomeView: View {
                         HStack {
                             Text(cd)
                                 .font(.prompt(18))
-                                .foregroundStyle(Color.rBlackWarm)
+                                .foregroundStyle(adaptiveColor)
                             Spacer()
                             Button {
                                 if descVisible {
@@ -103,7 +103,7 @@ struct HomeView: View {
                             } label: {
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.rTextSub)
+                                    .foregroundStyle(adaptiveColor.opacity(0.5))
                             }
                         }
                         .padding(.horizontal, DS.hPad)
@@ -182,7 +182,7 @@ struct HomeView: View {
                             Spacer().frame(height: 108)
                             ForEach(0..<pinchDotCount, id: \.self) { _ in
                                 Circle()
-                                    .fill(Color.rBlackWarm.opacity(0.45))
+                                    .fill(adaptiveColor.opacity(0.45))
                                     .frame(width: 5, height: 5)
                             }
                             Spacer().frame(height: 192)
@@ -304,16 +304,30 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Adaptive color
+
+    private var isDarkBackground: Bool {
+        let h = Calendar.current.component(.hour, from: now)
+        guard let wmo = weather.current?.weatherCode else {
+            return h < 6 || h >= 21
+        }
+        return WeatherThemeLibrary.isEffectivelyDark(wmoCode: wmo, hour: h)
+    }
+
+    private var adaptiveColor: Color {
+        isDarkBackground ? .white : Color.rBlackWarm
+    }
+
     // MARK: - Sub-views
 
     private var temperatureView: some View {
         HStack(alignment: .top, spacing: 0) {
             Text(weather.current.map { "\(Int($0.temperature.rounded()))" } ?? "--")
                 .font(.rajdhani(18))
-                .foregroundStyle(.white)
+                .foregroundStyle(adaptiveColor)
             Text("°")
                 .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(.white)
+                .foregroundStyle(adaptiveColor)
         }
     }
 
@@ -321,10 +335,10 @@ struct HomeView: View {
         HStack(spacing: 6) {
             Image(systemName: weatherIcon)
                 .font(.system(size: 22))
-                .foregroundStyle(.white)
+                .foregroundStyle(adaptiveColor)
             Text(greeting)
                 .font(.prompt(18, weight: .semiBold))
-                .foregroundStyle(.white)
+                .foregroundStyle(adaptiveColor)
         }
     }
 

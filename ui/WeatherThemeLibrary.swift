@@ -281,6 +281,19 @@ struct WeatherThemeLibrary {
         ], blur: 30, opacity: 0.35, dur: 28, turb: 0.0, count: 3...5),
     ]
 
+    // MARK: - Effective Darkness for Text Adaptation
+
+    /// 현재 날씨·시간 기준으로 배경이 어두운지 반환.
+    /// 텍스트 색(흰색 vs 어두운색) 결정에 사용.
+    static func isEffectivelyDark(wmoCode: Int, hour: Int) -> Bool {
+        let theme = baseTheme(wmoCode: wmoCode, hour: hour)
+        if theme.isDark { return true }
+        // WMO 0,1은 시간별 테마 교체로 처리 — isDark가 이미 반영됨
+        guard wmoCode != 0, wmoCode != 1 else { return false }
+        let tod = timeOfDayModifier(hour: hour)
+        return tod.overlayOpacity > 0.30
+    }
+
     // MARK: - WMO Code → Base Theme
 
     static func baseTheme(wmoCode: Int, hour: Int) -> WeatherBaseTheme {

@@ -5,6 +5,7 @@ import SwiftUI
 // 배경 orb가 정확히 동일한 위치에서 글자 내부를 통과하게 렌더링.
 struct GlassTimeTextA: View {
     let timeString: String
+    var isDark: Bool = true
     @State private var globalOffset: CGPoint = .zero
 
     private var screenSize: CGSize {
@@ -41,11 +42,11 @@ struct GlassTimeTextA: View {
                         )
 
                         // ── orb를 전역 좌표로 계산 → 로컬로 변환 → 텍스트로 마스킹 ──
-                        // 흰 베이스 — orb가 없는 영역도 흰색으로
+                        // 베이스 — orb가 없는 영역 채움 (배경 밝기에 따라 전환)
                         ctx.drawLayer { layer in
                             layer.fill(
                                 Path(CGRect(origin: .zero, size: size)),
-                                with: .color(.white)
+                                with: .color(isDark ? .white : Color.rBlackWarm)
                             )
                             layer.blendMode = .destinationIn
                             layer.draw(resolved, at: mid, anchor: .center)
