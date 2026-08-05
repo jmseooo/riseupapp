@@ -71,3 +71,9 @@ ui/
 ├── DesignTokens.swift        # 컬러 · 타이포 정의
 └── WeatherThemeLibrary.swift # 날씨별 배경 테마
 ```
+
+## 라이선스
+
+MIT © 2026 진민서 — 자세한 내용은 [LICENSE](LICENSE) 참고
+
+MIT는 **소스 코드에만** 적용됩니다. 앱 아이콘과 일러스트레이션 등 디자인 에셋은 적용 대상이 아닙니다.
